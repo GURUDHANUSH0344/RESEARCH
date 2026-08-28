@@ -14,7 +14,426 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contradictions: {
+        Row: {
+          confidence: string | null
+          created_at: string
+          finding_a: string | null
+          finding_b: string | null
+          id: string
+          paper_a: string | null
+          paper_b: string | null
+          possible_explanation: string | null
+          project_id: string
+          topic: string | null
+        }
+        Insert: {
+          confidence?: string | null
+          created_at?: string
+          finding_a?: string | null
+          finding_b?: string | null
+          id?: string
+          paper_a?: string | null
+          paper_b?: string | null
+          possible_explanation?: string | null
+          project_id: string
+          topic?: string | null
+        }
+        Update: {
+          confidence?: string | null
+          created_at?: string
+          finding_a?: string | null
+          finding_b?: string | null
+          id?: string
+          paper_a?: string | null
+          paper_b?: string | null
+          possible_explanation?: string | null
+          project_id?: string
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contradictions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experiments: {
+        Row: {
+          created_at: string
+          hypothesis_id: string | null
+          id: string
+          plan: Json
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          hypothesis_id?: string | null
+          id?: string
+          plan?: Json
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          hypothesis_id?: string | null
+          id?: string
+          plan?: Json
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiments_hypothesis_id_fkey"
+            columns: ["hypothesis_id"]
+            isOneToOne: false
+            referencedRelation: "hypotheses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hypotheses: {
+        Row: {
+          created_at: string
+          dependent_variable: string | null
+          evidence: string | null
+          expected_outcome: string | null
+          feasibility_score: number | null
+          id: string
+          impact_score: number | null
+          independent_variable: string | null
+          label: string | null
+          novelty_score: number | null
+          overall_score: number | null
+          project_id: string
+          rationale: string | null
+          selected: boolean
+          statement: string
+        }
+        Insert: {
+          created_at?: string
+          dependent_variable?: string | null
+          evidence?: string | null
+          expected_outcome?: string | null
+          feasibility_score?: number | null
+          id?: string
+          impact_score?: number | null
+          independent_variable?: string | null
+          label?: string | null
+          novelty_score?: number | null
+          overall_score?: number | null
+          project_id: string
+          rationale?: string | null
+          selected?: boolean
+          statement: string
+        }
+        Update: {
+          created_at?: string
+          dependent_variable?: string | null
+          evidence?: string | null
+          expected_outcome?: string | null
+          feasibility_score?: number | null
+          id?: string
+          impact_score?: number | null
+          independent_variable?: string | null
+          label?: string | null
+          novelty_score?: number | null
+          overall_score?: number | null
+          project_id?: string
+          rationale?: string | null
+          selected?: boolean
+          statement?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hypotheses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paper_analysis: {
+        Row: {
+          contributions: string[]
+          created_at: string
+          dataset: string | null
+          experimental_setup: string | null
+          future_work: string[]
+          id: string
+          limitations: string[]
+          methodology: string | null
+          objective: string | null
+          paper_id: string
+          problem: string | null
+          results: string | null
+        }
+        Insert: {
+          contributions?: string[]
+          created_at?: string
+          dataset?: string | null
+          experimental_setup?: string | null
+          future_work?: string[]
+          id?: string
+          limitations?: string[]
+          methodology?: string | null
+          objective?: string | null
+          paper_id: string
+          problem?: string | null
+          results?: string | null
+        }
+        Update: {
+          contributions?: string[]
+          created_at?: string
+          dataset?: string | null
+          experimental_setup?: string | null
+          future_work?: string[]
+          id?: string
+          limitations?: string[]
+          methodology?: string | null
+          objective?: string | null
+          paper_id?: string
+          problem?: string | null
+          results?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paper_analysis_paper_id_fkey"
+            columns: ["paper_id"]
+            isOneToOne: false
+            referencedRelation: "papers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      papers: {
+        Row: {
+          abstract: string | null
+          authors: string[]
+          citation_count: number
+          concepts: string[]
+          created_at: string
+          doi: string | null
+          external_id: string | null
+          id: string
+          open_access: boolean
+          project_id: string
+          source: string | null
+          title: string
+          url: string | null
+          venue: string | null
+          year: number | null
+        }
+        Insert: {
+          abstract?: string | null
+          authors?: string[]
+          citation_count?: number
+          concepts?: string[]
+          created_at?: string
+          doi?: string | null
+          external_id?: string | null
+          id?: string
+          open_access?: boolean
+          project_id: string
+          source?: string | null
+          title: string
+          url?: string | null
+          venue?: string | null
+          year?: number | null
+        }
+        Update: {
+          abstract?: string | null
+          authors?: string[]
+          citation_count?: number
+          concepts?: string[]
+          created_at?: string
+          doi?: string | null
+          external_id?: string | null
+          id?: string
+          open_access?: boolean
+          project_id?: string
+          source?: string | null
+          title?: string
+          url?: string | null
+          venue?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "papers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_gaps: {
+        Row: {
+          category: string | null
+          confidence: string | null
+          created_at: string
+          description: string | null
+          evidence: string | null
+          feasibility: number | null
+          id: string
+          novelty: number | null
+          potential_question: string | null
+          project_id: string
+          supporting_papers: string[]
+          title: string
+          why_it_matters: string | null
+        }
+        Insert: {
+          category?: string | null
+          confidence?: string | null
+          created_at?: string
+          description?: string | null
+          evidence?: string | null
+          feasibility?: number | null
+          id?: string
+          novelty?: number | null
+          potential_question?: string | null
+          project_id: string
+          supporting_papers?: string[]
+          title: string
+          why_it_matters?: string | null
+        }
+        Update: {
+          category?: string | null
+          confidence?: string | null
+          created_at?: string
+          description?: string | null
+          evidence?: string | null
+          feasibility?: number | null
+          id?: string
+          novelty?: number | null
+          potential_question?: string | null
+          project_id?: string
+          supporting_papers?: string[]
+          title?: string
+          why_it_matters?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_gaps_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_projects: {
+        Row: {
+          created_at: string
+          id: string
+          objective: string | null
+          paper_limit: number
+          research_field: string | null
+          research_question: string
+          status: string
+          synthesis: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+          year_from: number | null
+          year_to: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          objective?: string | null
+          paper_limit?: number
+          research_field?: string | null
+          research_question: string
+          status?: string
+          synthesis?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+          year_from?: number | null
+          year_to?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          objective?: string | null
+          paper_limit?: number
+          research_field?: string | null
+          research_question?: string
+          status?: string
+          synthesis?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          year_from?: number | null
+          year_to?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
