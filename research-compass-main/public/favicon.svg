@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="flaskBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#123B63"/>
+      <stop offset="100%" stop-color="#071A2B"/>
+    </linearGradient>
+    <linearGradient id="flaskGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#00A99D"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded Square Container matching Scientific Lab theme -->
+  <rect width="128" height="128" rx="28" fill="url(#flaskBg)" stroke="#2563EB" stroke-width="4"/>
+  <!-- Scientific Flask Icon -->
+  <g transform="translate(24, 20) scale(0.625)" fill="none" stroke="url(#flaskGlow)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M48 20 L80 20" />
+    <path d="M54 20 L54 48 L22 104 C18 112 24 120 34 120 L94 120 C104 120 110 112 106 104 L74 48 L74 20" />
+    <path d="M38 78 Q64 88 90 78" stroke="url(#flaskGlow)" stroke-width="6" fill="#00A99D" fill-opacity="0.35" />
+    <circle cx="56" cy="94" r="4" fill="#38BDF8" />
+    <circle cx="72" cy="88" r="3" fill="#00A99D" />
+  </g>
+</svg>
