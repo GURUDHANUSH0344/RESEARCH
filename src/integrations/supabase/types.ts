@@ -100,6 +100,50 @@ export type Database = {
           },
         ]
       }
+      experiment_results: {
+        Row: {
+          analysis: string | null
+          created_at: string
+          experiment_id: string | null
+          file_name: string | null
+          file_url: string | null
+          id: string
+          metrics: Json
+          project_id: string | null
+          raw_data: Json | null
+        }
+        Insert: {
+          analysis?: string | null
+          created_at?: string
+          experiment_id?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          metrics?: Json
+          project_id?: string | null
+          raw_data?: Json | null
+        }
+        Update: {
+          analysis?: string | null
+          created_at?: string
+          experiment_id?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          metrics?: Json
+          project_id?: string | null
+          raw_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_results_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hypotheses: {
         Row: {
           created_at: string

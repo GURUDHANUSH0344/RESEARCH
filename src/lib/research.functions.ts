@@ -72,7 +72,7 @@ export const selectHypothesis = createServerFn({ method: "POST" })
     await supabase.from("experiments").delete().eq("project_id", data.projectId);
     const { data: experiment, error } = await supabase
       .from("experiments")
-      .insert({ project_id: data.projectId, hypothesis_id: data.hypothesisId, plan })
+      .insert({ project_id: data.projectId, hypothesis_id: data.hypothesisId, plan: plan as any })
       .select("id")
       .single();
     if (error) throw new Error(error.message);

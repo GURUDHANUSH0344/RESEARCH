@@ -1,40 +1,32 @@
-# Dependencies
-node_modules/
-.pnpm-store/
-
-# Builds & Outputs
-dist/
-dist-ssr/
-.output/
-.vinxi/
-.tanstack/
-.nitro/
-build/
-
 # Logs
-logs/
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-env/
-venv/
+node_modules
+dist
+dist-ssr
+.output
+.vinxi
+.tanstack/**
+.nitro
+*.local
 
-# Environment files
-.env.local
-.env.*.local
+# Wrangler / Cloudflare
+.wrangler/
 .dev.vars
 
-# Editor & OS
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea/
+.idea
 .DS_Store
-Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
