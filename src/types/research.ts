@@ -123,3 +123,59 @@ export interface ResearchReference {
     bibtex: string;
   };
 }
+
+// ------------------------------------------------------------------
+// FINAL RESEARCH OUTPUT & EVIDENCE-LINKED MANUSCRIPT TYPES
+// ------------------------------------------------------------------
+
+export type FinalOutputType = "paper" | "patent";
+
+export type PaperDocumentType =
+  | "research_paper"
+  | "conference_paper"
+  | "journal_draft"
+  | "project_report";
+
+export interface SectionSourceLink {
+  section_key: string;
+  section_title: string;
+  paper_ids: string[];
+  paper_titles: string[];
+  note_ids: string[];
+  note_titles: string[];
+  finding_ids: string[];
+  finding_titles: string[];
+  evidence_snippets: string[];
+}
+
+export interface FinalResearchDocument {
+  id: string;
+  research_id: string;
+  mode: FinalOutputType;
+  document_type: PaperDocumentType;
+  version: number;
+  title: string;
+  sections: Record<string, string>;
+  sources: Record<string, SectionSourceLink>;
+  completeness_score: number;
+  changelog?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompletenessCheckItem {
+  id: string;
+  label: string;
+  status: "complete" | "in_progress" | "missing";
+  description: string;
+  recommendation?: string;
+}
+
+export interface ResearchCompletenessCheck {
+  overall_percentage: number;
+  items: CompletenessCheckItem[];
+  missing_evidence: string[];
+  contradictions_unresolved: string[];
+  is_ready_for_finalization: boolean;
+}
+

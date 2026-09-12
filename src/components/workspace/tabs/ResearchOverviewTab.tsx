@@ -137,6 +137,97 @@ export function ResearchOverviewTab({
         </div>
       </div>
 
+      {/* 🧭 Research Lifecycle Workflow Banner */}
+      <div className="card-mice p-4 bg-white border border-slate-200/80 shadow-2xs overflow-x-auto">
+        <div className="flex items-center justify-between gap-1 min-w-[760px] text-[11px]">
+          {[
+            { label: "Research Idea", done: true },
+            { label: "Literature Search", done: paperCount > 0 },
+            { label: "Evidence Collection", done: paperCount >= 2 },
+            { label: "Analysis", done: findingsCount > 0 },
+            { label: "Research Gap", done: findingsCount > 0 },
+            { label: "Methodology", done: notesCount > 0 },
+            { label: "Findings", done: findingsCount >= 2 },
+            { label: "Final Review", done: progress >= 60 },
+            { label: "Final Paper / Patent Draft", active: true },
+          ].map((step, idx, arr) => (
+            <React.Fragment key={idx}>
+              <div
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold shrink-0 transition-all ${
+                  step.active
+                    ? "bg-slate-900 text-white shadow-2xs"
+                    : step.done
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+                    : "bg-slate-100/70 text-slate-500"
+                }`}
+              >
+                {step.active ? (
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                ) : step.done ? (
+                  <Check className="w-3 h-3 text-emerald-600" />
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                )}
+                <span>{step.label}</span>
+              </div>
+              {idx < arr.length - 1 && (
+                <ArrowRight className="w-3 h-3 text-slate-300 shrink-0" />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* 🎯 Prominent Final-Stage Card: Your Research is Ready */}
+      <div className="card-mice p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="space-y-1.5 max-w-xl">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+              <Sparkles className="w-3 h-3 inline mr-1" />
+              Milestone Reached
+            </span>
+            <span className="text-xs text-slate-300">
+              Corpus: {paperCount} Papers &bull; {notesCount} Notes &bull; {findingsCount} Findings
+            </span>
+          </div>
+          <h3 className="font-heading text-xl md:text-2xl font-bold tracking-tight text-white">
+            Your Research is Ready
+          </h3>
+          <p className="text-xs text-slate-300 font-normal leading-relaxed">
+            Turn your completed research into a structured final document. Compile an evidence-linked academic manuscript (Research Paper, Conference Paper, Journal Draft) or a patent-oriented draft.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <Button
+            onClick={() => onNavigateTab("final_output")}
+            size="sm"
+            className="btn-interactive bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold h-9 px-4 rounded-xl shadow-xs cursor-pointer"
+          >
+            <FileText className="w-3.5 h-3.5 mr-1.5" />
+            Generate Research Paper
+          </Button>
+
+          <Button
+            onClick={() => onNavigateTab("final_output")}
+            size="sm"
+            className="btn-interactive bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold h-9 px-4 rounded-xl shadow-xs cursor-pointer"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
+            Create Patent-Oriented Draft
+          </Button>
+
+          <Button
+            onClick={() => onNavigateTab("final_output")}
+            size="sm"
+            variant="outline"
+            className="btn-interactive bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs font-semibold h-9 px-3.5 rounded-xl cursor-pointer"
+          >
+            Review Research
+          </Button>
+        </div>
+      </div>
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Papers */}
@@ -378,6 +469,14 @@ export function ResearchOverviewTab({
               >
                 <CheckSquare className="w-3.5 h-3.5 mr-2 text-amber-600" />
                 Add Research Task
+              </Button>
+              <Button
+                onClick={() => onNavigateTab("final_output")}
+                variant="outline"
+                className="w-full justify-start text-xs font-semibold h-9 rounded-xl border-emerald-200 text-emerald-800 bg-emerald-50/50 hover:bg-emerald-100/60"
+              >
+                <FileCheck2 className="w-3.5 h-3.5 mr-2 text-emerald-600" />
+                Final Output & Paper Draft
               </Button>
             </div>
           </div>

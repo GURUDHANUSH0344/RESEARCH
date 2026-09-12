@@ -13,6 +13,7 @@ import {
   Lightbulb,
   TestTube,
   FileCheck,
+  FileCheck2,
   Network,
   FolderKanban,
   PlusCircle,
@@ -122,6 +123,13 @@ export function AppSidebar({
       id: "timeline" as WorkspaceTab,
       label: "Research Timeline",
       icon: Clock,
+    },
+    {
+      id: "final_output" as WorkspaceTab,
+      label: "Final Output",
+      icon: FileCheck2,
+      badge: "Ready",
+      badgeColor: "bg-emerald-500/25 text-emerald-300 border-emerald-400/40",
     },
   ];
 

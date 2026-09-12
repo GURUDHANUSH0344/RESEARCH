@@ -8,6 +8,7 @@ import { ResearchFindingsTab } from "./tabs/ResearchFindingsTab";
 import { ResearchReferencesTab } from "./tabs/ResearchReferencesTab";
 import { ResearchTasksTab } from "./tabs/ResearchTasksTab";
 import { ResearchTimelineTab } from "./tabs/ResearchTimelineTab";
+import { ResearchFinalOutputTab } from "./tabs/ResearchFinalOutputTab";
 import { ResearchAssistantChat } from "@/components/chat/ResearchAssistantChat";
 import { AutonomousPipelineRunner } from "@/components/research/AutonomousPipelineRunner";
 import { PaperComparisonMatrix } from "@/components/analysis/PaperComparisonMatrix";
@@ -34,6 +35,7 @@ export type WorkspaceTab =
   | "references"
   | "tasks"
   | "timeline"
+  | "final_output"
   | "pipeline"
   | "comparison"
   | "hypotheses"
@@ -284,6 +286,10 @@ export function ResearchWorkspace({
 
         {currentTab === "timeline" && (
           <ResearchTimelineTab project={project} />
+        )}
+
+        {currentTab === "final_output" && (
+          <ResearchFinalOutputTab project={project} />
         )}
 
         {/* Deep Scientific Analysis Tools (Preserved and Scoped to Active Project) */}

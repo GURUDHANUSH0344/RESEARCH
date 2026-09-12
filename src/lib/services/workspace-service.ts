@@ -19,6 +19,11 @@ import {
   type ResearchTimelineEvent,
   type ResearchChatMessage,
   type ResearchReference,
+  type FinalResearchDocument,
+  type FinalOutputType,
+  type PaperDocumentType,
+  type ResearchCompletenessCheck,
+  type CompletenessCheckItem,
 } from "@/types/research";
 import { type NormalizedPaper } from "./openalex";
 import { generateCitations } from "./citation-formatter";
@@ -45,6 +50,12 @@ function timelineKey(id: string) {
 }
 function chatsKey(id: string) {
   return `${STORAGE_PREFIX}chats_${id}`;
+}
+function finalDocsKey(id: string) {
+  return `${STORAGE_PREFIX}final_docs_${id}`;
+}
+function finalVersionsKey(id: string) {
+  return `${STORAGE_PREFIX}final_versions_${id}`;
 }
 
 // ------------------------------------------------------------------
@@ -1248,6 +1259,381 @@ class WorkspaceService {
         citations,
       };
     });
+  }
+
+  // ----------------------------------------------------------------
+  // FINAL RESEARCH OUTPUT & VERSION HISTORY APIS (Strictly Isolate by researchId)
+  // ----------------------------------------------------------------
+
+  public async getFinalDocuments(researchId: string): Promise<FinalResearchDocument[]> {
+    this.initSeedsIfEmpty();
+    if (typeof window === "undefined") return [];
+
+    try {
+      const raw = localStorage.getItem(finalDocsKey(researchId));
+      if (!raw) return [];
+      const docs: FinalResearchDocument[] = JSON.parse(raw);
+      return docs.filter((d) => d.research_id === researchId);
+    } catch {
+      return [];
+    }
+  }
+
+  public async getLatestFinalDocument(
+    researchId: string,
+    mode: FinalOutputType = "paper"
+  ): Promise<FinalResearchDocument | null> {
+    const docs = await this.getFinalDocuments(researchId);
+    const matching = docs
+      .filter((d) => d.mode === mode)
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    return matching[0] || null;
+  }
+
+  public async saveFinalDocument(
+    researchId: string,
+    doc: FinalResearchDocument
+  ): Promise<FinalResearchDocument> {
+    const docs = await this.getFinalDocuments(researchId);
+    const existingIdx = docs.findIndex((d) => d.id === doc.id);
+
+    const updatedDoc: FinalResearchDocument = {
+      ...doc,
+      research_id: researchId,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existingIdx >= 0) {
+      docs[existingIdx] = updatedDoc;
+    } else {
+      docs.unshift(updatedDoc);
+    }
+
+    localStorage.setItem(finalDocsKey(researchId), JSON.stringify(docs));
+
+    await this.addTimelineEvent(researchId, {
+      event_type: "analysis_performed",
+      title: `Final Output Updated: ${doc.mode === "patent" ? "Patent Draft" : "Manuscript"}`,
+      description: `Saved version ${doc.version} of "${doc.title.slice(0, 50)}..."`,
+    });
+
+    return updatedDoc;
+  }
+
+  public async createDocumentVersion(
+    researchId: string,
+    doc: FinalResearchDocument,
+    changelog: string = "Snapshot milestone"
+  ): Promise<FinalResearchDocument> {
+    const versions = await this.getDocumentVersions(researchId, doc.id);
+    const nextVersionNum = (versions[0]?.version || doc.version || 1) + 1;
+
+    const versionSnapshot: FinalResearchDocument = {
+      ...doc,
+      id: `fdoc_v${nextVersionNum}_${Date.now()}`,
+      research_id: researchId,
+      version: nextVersionNum,
+      changelog,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Save to version log
+    versions.unshift(versionSnapshot);
+    localStorage.setItem(finalVersionsKey(researchId), JSON.stringify(versions));
+
+    // Also update main active document
+    const updatedActive: FinalResearchDocument = {
+      ...doc,
+      version: nextVersionNum,
+      changelog,
+      updated_at: new Date().toISOString(),
+    };
+    await this.saveFinalDocument(researchId, updatedActive);
+
+    await this.addTimelineEvent(researchId, {
+      event_type: "status_changed",
+      title: `Document Version ${nextVersionNum} Finalized`,
+      description: `Archived milestone version ${nextVersionNum} with changelog: "${changelog}"`,
+    });
+
+    return updatedActive;
+  }
+
+  public async getDocumentVersions(
+    researchId: string,
+    docId?: string
+  ): Promise<FinalResearchDocument[]> {
+    this.initSeedsIfEmpty();
+    if (typeof window === "undefined") return [];
+
+    try {
+      const raw = localStorage.getItem(finalVersionsKey(researchId));
+      if (!raw) return [];
+      const versions: FinalResearchDocument[] = JSON.parse(raw);
+      return versions
+        .filter((v) => v.research_id === researchId && (!docId || v.id.startsWith("fdoc_") || v.mode === docId))
+        .sort((a, b) => b.version - a.version);
+    } catch {
+      return [];
+    }
+  }
+
+  public async restoreDocumentVersion(
+    researchId: string,
+    versionId: string
+  ): Promise<FinalResearchDocument> {
+    const versions = await this.getDocumentVersions(researchId);
+    const target = versions.find((v) => v.id === versionId);
+    if (!target) {
+      throw new Error(`Version ${versionId} not found`);
+    }
+
+    const restoredDoc: FinalResearchDocument = {
+      ...target,
+      id: `fdoc_${target.mode}_${researchId}`,
+      changelog: `Restored from Version ${target.version}`,
+      updated_at: new Date().toISOString(),
+    };
+
+    await this.saveFinalDocument(researchId, restoredDoc);
+
+    await this.addTimelineEvent(researchId, {
+      event_type: "status_changed",
+      title: `Document Restored to Version ${target.version}`,
+      description: `Active draft restored from archived snapshot Version ${target.version}`,
+    });
+
+    return restoredDoc;
+  }
+
+  // ----------------------------------------------------------------
+  // RESEARCH COMPLETENESS AUDIT ENGINE (Strict Scoped Calculation)
+  // ----------------------------------------------------------------
+
+  public async calculateCompleteness(
+    researchId: string,
+    doc?: FinalResearchDocument | null
+  ): Promise<ResearchCompletenessCheck> {
+    const project = await this.getProjectById(researchId);
+    const notes = await this.getNotes(researchId);
+    const findings = await this.getFindings(researchId);
+    const tasks = await this.getTasks(researchId);
+    const papers = await this.getPapers(researchId);
+
+    const items: CompletenessCheckItem[] = [];
+    const missingEvidence: string[] = [];
+    const unresolvedContradictions: string[] = [];
+
+    // 1. Abstract & Scope
+    const hasDocAbstract = !!doc?.sections?.abstract && doc.sections.abstract.length > 50;
+    const hasProjectObjective = !!project?.objective && project.objective.length > 20;
+    if (hasDocAbstract || hasProjectObjective) {
+      items.push({
+        id: "chk_abstract",
+        label: "Abstract & Problem Statement",
+        status: hasDocAbstract ? "complete" : "in_progress",
+        description: hasDocAbstract
+          ? "Formulated clear problem, methodology, and outcome abstract."
+          : "Initial objectives documented; manuscript abstract draft recommended.",
+      });
+    } else {
+      items.push({
+        id: "chk_abstract",
+        label: "Abstract & Problem Statement",
+        status: "missing",
+        description: "No formal abstract or objective drafted.",
+        recommendation: "Use the AI Writing Assistant to generate an evidence-linked abstract.",
+      });
+      missingEvidence.push("Abstract and core problem formulation");
+    }
+
+    // 2. Research Gap Identified
+    const gapFindings = findings.filter((f) => f.type === "gap");
+    const hasDocGap = !!doc?.sections?.research_gap && doc.sections.research_gap.length > 30;
+    const hasProjectGaps = (project?.gaps?.length || 0) > 0 || gapFindings.length > 0;
+    if (hasDocGap || hasProjectGaps) {
+      items.push({
+        id: "chk_gap",
+        label: "Research Gap Identified",
+        status: "complete",
+        description: `Identified ${gapFindings.length} research gap(s) differentiating this work from baseline literature.`,
+      });
+    } else {
+      items.push({
+        id: "chk_gap",
+        label: "Research Gap Identified",
+        status: "missing",
+        description: "No explicit scientific literature gap recorded.",
+        recommendation: "Record literature gaps under the Findings tab or generate via AI Assistant.",
+      });
+      missingEvidence.push("Specific research gap justification");
+    }
+
+    // 3. Objectives Defined
+    const hasObjectives = !!project?.objective || !!doc?.sections?.objectives;
+    items.push({
+      id: "chk_objectives",
+      label: "Research Objectives Defined",
+      status: hasObjectives ? "complete" : "missing",
+      description: hasObjectives
+        ? "Explicit research aim and hypothesis target formalised."
+        : "Project objectives are missing.",
+      recommendation: hasObjectives ? undefined : "Define specific objectives under the Overview tab.",
+    });
+    if (!hasObjectives) missingEvidence.push("Formal research objectives");
+
+    // 4. Methodology Documented
+    const methodologyNotes = notes.filter((n) => n.category === "methodology");
+    const hasDocMethodology = !!doc?.sections?.methodology && doc.sections.methodology.length > 50;
+    const hasExperiment = !!project?.experiment || methodologyNotes.length > 0;
+    if (hasDocMethodology || hasExperiment) {
+      items.push({
+        id: "chk_methodology",
+        label: "Methodology & Architecture Documented",
+        status: "complete",
+        description: "Technical pipeline, architecture, and evaluation metrics specified.",
+      });
+    } else {
+      items.push({
+        id: "chk_methodology",
+        label: "Methodology & Architecture Documented",
+        status: "missing",
+        description: "No methodology notes or architectural specifications found.",
+        recommendation: "Document your pipeline or experimental protocol.",
+      });
+      missingEvidence.push("Detailed methodology workflow");
+    }
+
+    // 5. Results & Empirical Findings Available
+    const empiricalFindings = findings.filter((f) => f.type === "finding" || f.type === "statistic");
+    const hasDocResults = !!doc?.sections?.results && doc.sections.results.length > 50;
+    if (hasDocResults || empiricalFindings.length > 0) {
+      items.push({
+        id: "chk_results",
+        label: "Results & Quantitative Findings",
+        status: empiricalFindings.length >= 2 || hasDocResults ? "complete" : "in_progress",
+        description: `Recorded ${empiricalFindings.length} empirical metric(s) or benchmark findings.`,
+      });
+    } else {
+      items.push({
+        id: "chk_results",
+        label: "Results & Quantitative Findings",
+        status: "missing",
+        description: "No quantitative results or benchmark metrics found.",
+        recommendation: "Record experimental results under the Findings tab.",
+      });
+      missingEvidence.push("Empirical results or benchmark numbers");
+    }
+
+    // 6. Literature References Included
+    if (papers.length >= 3) {
+      items.push({
+        id: "chk_references",
+        label: "Literature References Compiled",
+        status: "complete",
+        description: `${papers.length} scholarly papers indexed in research corpus.`,
+      });
+    } else if (papers.length > 0) {
+      items.push({
+        id: "chk_references",
+        label: "Literature References Compiled",
+        status: "in_progress",
+        description: `${papers.length} paper(s) indexed. Consider indexing at least 3-5 papers.`,
+        recommendation: "Search and save additional peer-reviewed papers in the Papers tab.",
+      });
+    } else {
+      items.push({
+        id: "chk_references",
+        label: "Literature References Compiled",
+        status: "missing",
+        description: "Zero literature papers collected.",
+        recommendation: "Add literature papers to ground citations.",
+      });
+      missingEvidence.push("Peer-reviewed literature references");
+    }
+
+    // 7. Citations & DOIs Verified
+    const papersWithDoi = papers.filter((p) => !!p.doi);
+    const citationRatio = papers.length > 0 ? papersWithDoi.length / papers.length : 0;
+    if (citationRatio >= 0.7 && papers.length > 0) {
+      items.push({
+        id: "chk_citations",
+        label: "Citations & DOIs Verified",
+        status: "complete",
+        description: `${papersWithDoi.length} of ${papers.length} citations verified with persistent identifiers (DOIs).`,
+      });
+    } else {
+      items.push({
+        id: "chk_citations",
+        label: "Citations & DOIs Verified",
+        status: papers.length > 0 ? "in_progress" : "missing",
+        description: "Some references lack registered DOIs or publication venues.",
+        recommendation: "Verify references in the References tab.",
+      });
+    }
+
+    // 8. Missing Evidence Checks in Active Document
+    if (doc) {
+      Object.entries(doc.sections).forEach(([secKey, secContent]) => {
+        if (secContent.includes("[Additional empirical evidence required")) {
+          missingEvidence.push(`Unresolved evidence in section: ${secKey.replace("_", " ")}`);
+        }
+      });
+    }
+
+    // 9. Potential Contradictions Check
+    if (project?.contradictions && project.contradictions.length > 0) {
+      unresolvedContradictions.push(...project.contradictions.map((c) => c.topic));
+      items.push({
+        id: "chk_contradictions",
+        label: "Literature Contradictions",
+        status: "in_progress",
+        description: `${project.contradictions.length} potential literature contradiction(s) flagged for discussion.`,
+        recommendation: "Discuss these conflicting findings in the Discussion / Analysis section.",
+      });
+    } else {
+      items.push({
+        id: "chk_contradictions",
+        label: "Literature Contradictions Checked",
+        status: "complete",
+        description: "No unresolved conflicting literature evidence detected.",
+      });
+    }
+
+    // 10. Research Milestones & Tasks Progress
+    const completedTasks = tasks.filter((t) => t.status === "completed").length;
+    const taskProgress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 60;
+    items.push({
+      id: "chk_tasks",
+      label: "Research Milestones Executed",
+      status: taskProgress >= 75 ? "complete" : taskProgress >= 30 ? "in_progress" : "missing",
+      description: tasks.length > 0
+        ? `${completedTasks}/${tasks.length} tasks completed (${taskProgress}%).`
+        : "No formal research tasks logged.",
+    });
+
+    // Score Calculation
+    let score = 0;
+    items.forEach((item) => {
+      if (item.status === "complete") score += 10;
+      else if (item.status === "in_progress") score += 5;
+    });
+
+    // Penalize for missing evidence markers in text
+    if (missingEvidence.length > 0) {
+      score = Math.max(20, score - missingEvidence.length * 3);
+    }
+
+    const overallPercentage = Math.min(100, Math.max(15, Math.round(score)));
+
+    return {
+      overall_percentage: overallPercentage,
+      items,
+      missing_evidence: missingEvidence,
+      contradictions_unresolved: unresolvedContradictions,
+      is_ready_for_finalization: overallPercentage >= 70,
+    };
   }
 }
 
