@@ -18,27 +18,11 @@ import { ResearchReportViewer } from "@/components/report/ResearchReportViewer";
 import { ResearchTrends } from "@/components/analytics/ResearchTrends";
 import { ResearchKnowledgeGraph } from "@/components/graph/ResearchKnowledgeGraph";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
-  LayoutDashboard,
-  BookOpen,
-  MessageSquare,
-  FileText,
-  Sparkles,
-  BookMarked,
-  CheckSquare,
-  Clock,
   Compass,
-  Cpu,
   ChevronRight,
   ShieldCheck,
-  Grid3X3,
-  Lightbulb,
-  TestTube,
-  FileCheck,
-  TrendingUp,
-  Network,
 } from "lucide-react";
 
 export type WorkspaceTab =
@@ -110,31 +94,6 @@ export function ResearchWorkspace({
     });
   }, [project.id]);
 
-  const primaryTabs: { id: WorkspaceTab; label: string; icon: any; count?: number | string }[] = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "papers", label: "Papers", icon: BookOpen, count: project.papers?.length || 0 },
-    { id: "chat", label: "AI Assistant", icon: MessageSquare },
-    { id: "notes", label: "Notes", icon: FileText, count: notesCount },
-    { id: "findings", label: "Findings", icon: Sparkles, count: findingsCount },
-    { id: "references", label: "References", icon: BookMarked },
-    {
-      id: "tasks",
-      label: "Tasks",
-      icon: CheckSquare,
-      count: tasksCount.total > 0 ? `${tasksCount.completed}/${tasksCount.total}` : undefined,
-    },
-    { id: "timeline", label: "Timeline", icon: Clock },
-  ];
-
-  const advancedTabs: { id: WorkspaceTab; label: string; icon: any }[] = [
-    { id: "pipeline", label: "Autonomous Discovery", icon: Cpu },
-    { id: "comparison", label: "Evidence Matrix", icon: Grid3X3 },
-    { id: "hypotheses", label: "Hypotheses", icon: Lightbulb },
-    { id: "experiment", label: "Experiment Protocol", icon: TestTube },
-    { id: "report", label: "Research Report", icon: FileCheck },
-    { id: "graph", label: "Knowledge Graph", icon: Network },
-  ];
-
   const getStatusBadge = (s: ResearchStatus) => {
     switch (s) {
       case "active":
@@ -200,7 +159,7 @@ export function ResearchWorkspace({
       </div>
 
       {/* Prominent Research Identification Bar */}
-      <div className="bg-white border-b border-slate-200/60 px-4 lg:px-8 py-3 shrink-0">
+      <div className="bg-white border-b border-slate-200/60 px-4 lg:px-8 py-3.5 shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div>
@@ -221,62 +180,6 @@ export function ResearchWorkspace({
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Workspace Navigation Tabs (Horizontal Scrollable) */}
-        <div className="flex items-center gap-1 overflow-x-auto pt-3 border-t border-slate-100 mt-3 no-scrollbar select-none">
-          {primaryTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = currentTab === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setCurrentTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
-                <span>{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                      isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-
-          <span className="h-4 w-px bg-slate-200 mx-1 shrink-0" />
-
-          {/* Deep Discovery Tools Group */}
-          {advancedTabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = currentTab === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setCurrentTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  isActive
-                    ? "bg-slate-900 text-white shadow-xs"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-                }`}
-                title={`Advanced Tool: ${tab.label}`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
         </div>
       </div>
 
