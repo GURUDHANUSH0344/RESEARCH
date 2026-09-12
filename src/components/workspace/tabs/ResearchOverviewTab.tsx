@@ -139,38 +139,40 @@ export function ResearchOverviewTab({
       </div>
 
       {/* 🧭 Research Lifecycle Workflow Banner */}
-      <div className="card-mice p-4 bg-white border border-slate-200/80 shadow-2xs overflow-x-auto">
-        <div className="flex items-center justify-between gap-1 min-w-[760px] text-[11px]">
+      <div className="card-mice p-3.5 bg-white border border-slate-200/80 shadow-2xs overflow-x-auto">
+        <div className="flex items-center justify-between gap-1 text-[11px] min-w-max lg:min-w-full">
           {[
-            { label: "Research Idea", done: true },
-            { label: "Literature Search", done: paperCount > 0 },
-            { label: "Evidence Collection", done: paperCount >= 2 },
-            { label: "Analysis", done: findingsCount > 0 },
-            { label: "Research Gap", done: findingsCount > 0 },
-            { label: "Methodology", done: notesCount > 0 },
-            { label: "Findings", done: findingsCount >= 2 },
-            { label: "Final Review", done: progress >= 60 },
-            { label: "Final Paper / Patent Draft", active: true },
+            { label: "Idea", fullLabel: "Research Idea", done: true, tab: "overview" },
+            { label: "Literature", fullLabel: "Literature Search", done: paperCount > 0, tab: "papers" },
+            { label: "Evidence", fullLabel: "Evidence Collection", done: paperCount >= 2, tab: "papers" },
+            { label: "Analysis", fullLabel: "Analysis & Comparison", done: findingsCount > 0, tab: "comparison" },
+            { label: "Research Gap", fullLabel: "Research Gap Formulation", done: findingsCount > 0, tab: "hypotheses" },
+            { label: "Methodology", fullLabel: "Proposed Methodology", done: notesCount > 0, tab: "notes" },
+            { label: "Findings", fullLabel: "Empirical Findings", done: findingsCount >= 2, tab: "findings" },
+            { label: "Final Paper", fullLabel: "Final Research Paper", active: true, tab: "final_output" },
           ].map((step, idx, arr) => (
             <React.Fragment key={idx}>
-              <div
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold shrink-0 transition-all ${
+              <button
+                type="button"
+                onClick={() => step.tab && onNavigateTab(step.tab)}
+                title={`Jump to ${step.fullLabel}`}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
                   step.active
-                    ? "bg-slate-900 text-white shadow-2xs"
+                    ? "bg-slate-900 text-white shadow-2xs hover:bg-slate-800"
                     : step.done
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
-                    : "bg-slate-100/70 text-slate-500"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60 hover:bg-emerald-100"
+                    : "bg-slate-100/70 text-slate-500 hover:bg-slate-200/70"
                 }`}
               >
                 {step.active ? (
-                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <Sparkles className="w-3 h-3 text-amber-300 shrink-0" />
                 ) : step.done ? (
-                  <Check className="w-3 h-3 text-emerald-600" />
+                  <Check className="w-3 h-3 text-emerald-600 shrink-0" />
                 ) : (
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
                 )}
                 <span>{step.label}</span>
-              </div>
+              </button>
               {idx < arr.length - 1 && (
                 <ArrowRight className="w-3 h-3 text-slate-300 shrink-0" />
               )}
