@@ -148,16 +148,68 @@ export interface SectionSourceLink {
   evidence_snippets: string[];
 }
 
+export interface AuthorInfo {
+  name: string;
+  affiliation?: string;
+  email?: string;
+  is_corresponding?: boolean;
+}
+
+export interface CitationAuditItem {
+  tag: string; // e.g. "[1]"
+  paper_id?: string;
+  paper_title: string;
+  authors: string[];
+  year: number;
+  doi?: string;
+  exists_in_database: boolean;
+  citation_count_in_text: number;
+}
+
+export interface CitationAuditResult {
+  total_in_text_citations: number;
+  unique_citations: number;
+  matched_citations: number;
+  citations: CitationAuditItem[];
+  unmatched_tags: string[];
+  unused_papers: { id: string; title: string; year: number }[];
+  is_consistent: boolean;
+}
+
+export interface QualityDimension {
+  id: string;
+  label: string;
+  score: number; // 0 - 100
+  weight: number;
+  status: "pass" | "warning" | "fail";
+  description: string;
+  details?: string;
+}
+
+export interface PaperQualityCheckReport {
+  readiness_score: number; // 0 - 100%
+  grade: "Publication Ready" | "Substantial Draft" | "Requires Empirical Revisions" | "Preliminary Outline";
+  dimensions: QualityDimension[];
+  critical_missing_elements: string[];
+  actionable_recommendations: string[];
+  citation_audit: CitationAuditResult;
+  checked_at: string;
+}
+
 export interface FinalResearchDocument {
   id: string;
   research_id: string;
   mode: FinalOutputType;
   document_type: PaperDocumentType;
   version: number;
+  version_tag?: string; // e.g. "Draft 1", "Draft 2", "Draft 3", "Final"
   title: string;
+  authors?: AuthorInfo[];
+  keywords?: string[];
   sections: Record<string, string>;
   sources: Record<string, SectionSourceLink>;
   completeness_score: number;
+  quality_report?: PaperQualityCheckReport;
   changelog?: string;
   created_at: string;
   updated_at: string;
@@ -178,4 +230,5 @@ export interface ResearchCompletenessCheck {
   contradictions_unresolved: string[];
   is_ready_for_finalization: boolean;
 }
+
 

@@ -44,9 +44,16 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+import { handleAiApiRequest } from "./server/ai-router";
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+      if (url.pathname.startsWith("/api/ai/")) {
+        return await handleAiApiRequest(request);
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

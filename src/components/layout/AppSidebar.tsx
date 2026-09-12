@@ -126,10 +126,10 @@ export function AppSidebar({
     },
     {
       id: "final_output" as WorkspaceTab,
-      label: "Final Output",
-      icon: FileCheck2,
-      badge: "Ready",
-      badgeColor: "bg-emerald-500/25 text-emerald-300 border-emerald-400/40",
+      label: "Final Research Paper",
+      icon: FileText,
+      badge: "Paper",
+      badgeColor: "bg-blue-500/25 text-blue-300 border-blue-400/40",
     },
   ];
 
