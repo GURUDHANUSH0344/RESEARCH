@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AppNavbar } from "@/components/layout/AppNavbar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import { ResearchLibrary } from "@/components/library/ResearchLibrary";
 import { ResearchWorkspace, type WorkspaceTab } from "@/components/workspace/ResearchWorkspace";
 import { NewResearchModal } from "@/components/research/NewResearchModal";
@@ -24,6 +25,12 @@ function ResearchCompassApp() {
   const [view, setView] = useState<"library" | "workspace">("library");
   const [activeProject, setActiveProject] = useState<ResearchProject | null>(null);
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("overview");
+  const [allProjects, setAllProjects] = useState<ResearchProject[]>([]);
+
+  // Sub-entity metric counts for sidebar badges
+  const [notesCount, setNotesCount] = useState(0);
+  const [tasksCount, setTasksCount] = useState({ total: 0, completed: 0 });
+  const [findingsCount, setFindingsCount] = useState(0);
 
   // Telemetry for pipeline running
   const [isRunningPipeline, setIsRunningPipeline] = useState(false);
@@ -37,6 +44,31 @@ function ResearchCompassApp() {
 
   // Supabase Auth State
   const [user, setUser] = useState<any>(null);
+
+  const refreshProjects = async () => {
+    try {
+      const list = await workspaceService.getAllProjects();
+      setAllProjects(list);
+    } catch {
+      // Fallback
+    }
+  };
+
+  // Sync sub-entity counts whenever active project changes
+  useEffect(() => {
+    if (activeProject) {
+      workspaceService.getNotes(activeProject.id).then((n) => setNotesCount(n.length));
+      workspaceService.getTasks(activeProject.id).then((t) => {
+        const completed = t.filter((item) => item.status === "completed").length;
+        setTasksCount({ total: t.length, completed });
+      });
+      workspaceService.getFindings(activeProject.id).then((f) => setFindingsCount(f.length));
+    }
+  }, [activeProject?.id]);
+
+  useEffect(() => {
+    refreshProjects();
+  }, [view]);
 
   // Initialize auth and check URL deep-linking
   useEffect(() => {
@@ -202,25 +234,53 @@ function ResearchCompassApp() {
         onLogout={handleLogout}
       />
 
-      {/* Main View Container: Either Research Library or Dedicated Workspace */}
-      <div className="flex-1 min-h-0 overflow-hidden relative">
-        {view === "library" || !activeProject ? (
-          <main className="h-full overflow-y-auto p-4 md:p-8">
-            <ResearchLibrary
-              onOpenResearch={(p) => handleOpenResearch(p)}
-              onOpenNewResearch={() => setIsNewResearchOpen(true)}
-              onOpenCropDemo={() => setIsCropDemoOpen(true)}
-              user={user}
+      {/* Main View Container: Left Sidebar + Dynamic Content Canvas */}
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        <AppSidebar
+          view={view}
+          currentTab={workspaceTab}
+          onSelectTab={(tab) => setWorkspaceTab(tab)}
+          activeProject={activeProject}
+          projects={allProjects}
+          onSelectProject={(p) => handleOpenResearch(p)}
+          onBackToLibrary={handleBackToLibrary}
+          onOpenNewResearch={() => setIsNewResearchOpen(true)}
+          onOpenCropDemo={() => setIsCropDemoOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          notesCount={notesCount}
+          tasksCount={tasksCount}
+          findingsCount={findingsCount}
+          isRunningPipeline={isRunningPipeline}
+        />
+
+        <div className="flex-1 min-h-0 overflow-hidden relative flex flex-col bg-[#F5F7FB]">
+          {view === "library" || !activeProject ? (
+            <main className="h-full overflow-y-auto p-4 md:p-8">
+              <ResearchLibrary
+                onOpenResearch={(p) => handleOpenResearch(p)}
+                onOpenNewResearch={() => setIsNewResearchOpen(true)}
+                onOpenCropDemo={() => setIsCropDemoOpen(true)}
+                user={user}
+              />
+            </main>
+          ) : (
+            <ResearchWorkspace
+              project={activeProject}
+              currentTab={workspaceTab}
+              onSelectTab={(tab) => setWorkspaceTab(tab)}
+              onBackToLibrary={handleBackToLibrary}
+              onUpdateProject={(updated) => {
+                setActiveProject(updated);
+                refreshProjects();
+              }}
+              onCountsChanged={({ notes, tasks, findings }) => {
+                if (notes !== undefined) setNotesCount(notes);
+                if (tasks !== undefined) setTasksCount(tasks);
+                if (findings !== undefined) setFindingsCount(findings);
+              }}
             />
-          </main>
-        ) : (
-          <ResearchWorkspace
-            project={activeProject}
-            onBackToLibrary={handleBackToLibrary}
-            onUpdateProject={(updated) => setActiveProject(updated)}
-            initialTab={workspaceTab}
-          />
-        )}
+          )}
+        </div>
       </div>
 
       {/* Global Modals */}

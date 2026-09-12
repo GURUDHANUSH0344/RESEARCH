@@ -61,28 +61,53 @@ interface ResearchWorkspaceProps {
   project: ResearchProject;
   onBackToLibrary: () => void;
   onUpdateProject: (updated: ResearchProject) => void;
+  currentTab?: WorkspaceTab;
+  onSelectTab?: (tab: WorkspaceTab) => void;
   initialTab?: WorkspaceTab;
+  onCountsChanged?: (counts: {
+    notes?: number;
+    tasks?: { total: number; completed: number };
+    findings?: number;
+  }) => void;
 }
 
 export function ResearchWorkspace({
   project,
   onBackToLibrary,
   onUpdateProject,
+  currentTab: controlledTab,
+  onSelectTab,
   initialTab = "overview",
+  onCountsChanged,
 }: ResearchWorkspaceProps) {
-  const [currentTab, setCurrentTab] = useState<WorkspaceTab>(initialTab);
+  const [internalTab, setInternalTab] = useState<WorkspaceTab>(initialTab);
+  const currentTab = controlledTab ?? internalTab;
+
+  const setCurrentTab = (tab: WorkspaceTab) => {
+    setInternalTab(tab);
+    onSelectTab?.(tab);
+  };
+
   const [notesCount, setNotesCount] = useState(0);
   const [tasksCount, setTasksCount] = useState({ total: 0, completed: 0 });
   const [findingsCount, setFindingsCount] = useState(0);
 
   // Sync sub-entity counts
   useEffect(() => {
-    workspaceService.getNotes(project.id).then((n) => setNotesCount(n.length));
+    workspaceService.getNotes(project.id).then((n) => {
+      setNotesCount(n.length);
+      onCountsChanged?.({ notes: n.length });
+    });
     workspaceService.getTasks(project.id).then((t) => {
       const completed = t.filter((item) => item.status === "completed").length;
-      setTasksCount({ total: t.length, completed });
+      const tc = { total: t.length, completed };
+      setTasksCount(tc);
+      onCountsChanged?.({ tasks: tc });
     });
-    workspaceService.getFindings(project.id).then((f) => setFindingsCount(f.length));
+    workspaceService.getFindings(project.id).then((f) => {
+      setFindingsCount(f.length);
+      onCountsChanged?.({ findings: f.length });
+    });
   }, [project.id]);
 
   const primaryTabs: { id: WorkspaceTab; label: string; icon: any; count?: number | string }[] = [
