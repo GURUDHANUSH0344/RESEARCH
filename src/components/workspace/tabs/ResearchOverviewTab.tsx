@@ -20,6 +20,7 @@ import {
   Layers,
   Activity,
   ShieldCheck,
+  FileCheck2,
 } from "lucide-react";
 import { toast } from "sonner";
 

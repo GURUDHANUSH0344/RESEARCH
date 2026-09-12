@@ -13,6 +13,7 @@ import {
   PAPER_SECTIONS,
   PATENT_SECTIONS,
 } from "@/lib/services/final-output-generator";
+import { docxExportService } from "@/lib/services/docx-export-service";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,8 @@ export function ResearchFinalOutputTab({
   const [versionChangelog, setVersionChangelog] = useState("");
   const [versions, setVersions] = useState<FinalResearchDocument[]>([]);
   const [completeness, setCompleteness] = useState<ResearchCompletenessCheck | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
 
   // Load or generate initial document
   const loadDocument = async (targetMode: FinalOutputType = mode) => {
@@ -247,7 +250,7 @@ export function ResearchFinalOutputTab({
     const text = compileFullMarkdown();
     const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = window.document.createElement("a");
     link.href = url;
     link.download = `${project.title.slice(0, 30).replace(/[^a-z0-9]/gi, "_")}_${mode}_v${document?.version || 1}.md`;
     link.click();
@@ -259,7 +262,7 @@ export function ResearchFinalOutputTab({
     const text = compileFullMarkdown();
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = window.document.createElement("a");
     link.href = url;
     link.download = `${project.title.slice(0, 30).replace(/[^a-z0-9]/gi, "_")}_${mode}_v${document?.version || 1}.txt`;
     link.click();
@@ -267,28 +270,50 @@ export function ResearchFinalOutputTab({
     toast.success("Exported Plain Text (.txt) document");
   };
 
-  const handleExportDocx = () => {
-    const text = compileFullMarkdown();
-    // HTML wrapper recognized by Microsoft Word
-    const htmlContent = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><title>${document?.title}</title><meta charset='utf-8'></head>
-      <body style="font-family: Calibri, sans-serif; font-size: 11pt; line-height: 1.5;">
-        <h1 style="color: #1E3A8A;">${document?.title}</h1>
-        <p><strong>Research ID:</strong> ${project.id} | <strong>Field:</strong> ${project.research_field}</p>
-        <hr/>
-        ${text.replace(/\n/g, "<br/>").replace(/## (.*?)(<br\/>)/g, "<h2 style='color:#0F766E;'>$1</h2>")}
-      </body>
-      </html>
-    `;
-    const blob = new Blob([htmlContent], { type: "application/msword" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${project.title.slice(0, 30).replace(/[^a-z0-9]/gi, "_")}_${mode}_v${document?.version || 1}.doc`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exported DOCX format document");
+  const handleDownloadWordDocx = async () => {
+    if (!document) return;
+    setIsExportingDocx(true);
+    try {
+      // 1. Automatically preserve in-progress edits if user is currently editing
+      let docToExport = document;
+      if (isEditing && activeSectionKey) {
+        const updatedSections = {
+          ...document.sections,
+          [activeSectionKey]: sectionContent,
+        };
+        docToExport = {
+          ...document,
+          sections: updatedSections,
+          updated_at: new Date().toISOString(),
+        };
+        const saved = await workspaceService.saveFinalDocument(project.id, docToExport);
+        setDocument(saved);
+        docToExport = saved;
+        setIsEditing(false);
+      }
+
+      // 2. Generate and download Microsoft Word .docx
+      const fileName = await docxExportService.downloadWordDocument(docToExport, project);
+      toast.success(`Generated & Downloaded: ${fileName}`, {
+        description: `Professional academic Word (.docx) document created with title page, numbered sections, TOC, and citations.`,
+        duration: 5000,
+      });
+    } catch (err) {
+      console.error("Failed to generate Word document:", err);
+      toast.error("Failed to generate Microsoft Word (.docx) document");
+    } finally {
+      setIsExportingDocx(false);
+    }
+  };
+
+  const handleEditBeforeDownload = (sectionKeyToEdit?: string) => {
+    setIsPreviewOpen(false);
+    if (sectionKeyToEdit) {
+      setActiveSectionKey(sectionKeyToEdit);
+      setSectionContent(document?.sections[sectionKeyToEdit] || "");
+    }
+    setIsEditing(true);
+    toast.info("Editing mode active. Review and tweak section content, then download.");
   };
 
   const handleExportPdf = () => {
@@ -333,6 +358,36 @@ export function ResearchFinalOutputTab({
 
           {/* Quick Triggers */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* PROMINENT BUTTON: Download as Word (.DOCX) */}
+            <Button
+              onClick={handleDownloadWordDocx}
+              disabled={isExportingDocx || !document}
+              size="sm"
+              className="btn-interactive text-xs font-bold h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs px-3.5"
+            >
+              {isExportingDocx ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Generating DOCX...
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5 mr-1.5" />
+                  Download as Word (.DOCX)
+                </>
+              )}
+            </Button>
+
+            <Button
+              onClick={() => setIsPreviewOpen(true)}
+              size="sm"
+              variant="outline"
+              className="btn-interactive text-xs font-semibold h-9 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+            >
+              <Eye className="w-3.5 h-3.5 mr-1.5 text-teal-600" />
+              Preview Document
+            </Button>
+
             <Button
               onClick={() => setIsCompletenessOpen(true)}
               size="sm"
@@ -371,7 +426,7 @@ export function ResearchFinalOutputTab({
               title="Re-synthesize all sections from current corpus"
             >
               <RefreshCw className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
-              Sync Corpus
+              Regenerate Document
             </Button>
           </div>
         </div>
@@ -670,18 +725,67 @@ export function ResearchFinalOutputTab({
             )}
           </div>
 
-          {/* 📥 Export & Distribution Bar */}
+          {/* 📥 Export & Distribution Controls Bar */}
           <div className="card-mice p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h4 className="text-xs font-bold font-heading text-slate-900">
-                Export & Distribution
+                Export & Distribution Controls
               </h4>
               <p className="text-[11px] text-slate-500 font-normal">
-                Export your finalized {mode === "patent" ? "patent draft" : "academic manuscript"} in standard scientific formats.
+                Export your finalized {mode === "patent" ? "patent draft" : "academic manuscript"} with title page, numbered sections, TOC, and citations.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              <Button
+                onClick={handleDownloadWordDocx}
+                disabled={isExportingDocx || !document}
+                size="sm"
+                className="btn-interactive text-xs font-bold h-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+              >
+                {isExportingDocx ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 mr-1 animate-spin" />
+                    Generating DOCX...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 mr-1" />
+                    Download Word Document (.DOCX)
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={() => setIsPreviewOpen(true)}
+                size="sm"
+                variant="outline"
+                className="btn-interactive text-xs font-semibold h-8 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                <Eye className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                Preview Document
+              </Button>
+
+              <Button
+                onClick={() => handleEditBeforeDownload()}
+                size="sm"
+                variant="outline"
+                className="btn-interactive text-xs font-semibold h-8 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                <Edit3 className="w-3.5 h-3.5 mr-1 text-purple-600" />
+                Edit Before Download
+              </Button>
+
+              <Button
+                onClick={handleRegenerateEntireDocument}
+                size="sm"
+                variant="outline"
+                className="btn-interactive text-xs font-semibold h-8 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1 text-slate-500" />
+                Regenerate Document
+              </Button>
+
               <Button
                 onClick={handleCopyFullText}
                 size="sm"
@@ -703,13 +807,13 @@ export function ResearchFinalOutputTab({
               </Button>
 
               <Button
-                onClick={handleExportDocx}
+                onClick={handleExportPlainText}
                 size="sm"
                 variant="outline"
                 className="btn-interactive text-xs font-semibold h-8 rounded-xl border-slate-200 text-slate-700"
               >
-                <FileText className="w-3.5 h-3.5 mr-1 text-blue-600" />
-                Word (.doc)
+                <FileText className="w-3.5 h-3.5 mr-1 text-slate-500" />
+                Plain Text (.txt)
               </Button>
 
               <Button
@@ -1021,6 +1125,221 @@ export function ResearchFinalOutputTab({
               >
                 Close
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 📄 Modal 5: Document Preview (Academic Word (.docx) Layout) */}
+      {isPreviewOpen && document && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl space-y-4 border border-slate-200/80 animate-fade-slide max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold font-heading text-slate-900 flex items-center gap-2">
+                    <span>Document Preview & Layout Inspector</span>
+                    <Badge variant="outline" className="text-[10px] font-semibold bg-blue-50 text-blue-700 border-blue-200">
+                      {mode === "patent" ? "Patent Specification" : "Academic Paper"}
+                    </Badge>
+                  </h3>
+                  <p className="text-xs text-slate-500 font-normal">
+                    Target export:{" "}
+                    <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono text-[11px]">
+                      {docxExportService.getStandardFileName(project)}
+                    </code>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => handleEditBeforeDownload()}
+                  size="sm"
+                  variant="outline"
+                  className="btn-interactive text-xs font-semibold h-8 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+                >
+                  <Edit3 className="w-3.5 h-3.5 mr-1 text-purple-600" />
+                  Edit Before Download
+                </Button>
+
+                <Button
+                  onClick={handleDownloadWordDocx}
+                  disabled={isExportingDocx}
+                  size="sm"
+                  className="btn-interactive text-xs font-bold h-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  Download as Word (.DOCX)
+                </Button>
+
+                <button
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Document Page Canvas */}
+            <div className="overflow-y-auto pr-2 space-y-6 flex-1 bg-slate-100/70 p-6 rounded-xl border border-slate-200/60">
+              <div className="bg-white rounded-xl shadow-xs border border-slate-200/80 p-8 max-w-3xl mx-auto space-y-8 text-slate-800 font-sans">
+                {/* 1. Title Page Preview */}
+                <div className="text-center space-y-3 pb-8 border-b border-slate-100">
+                  <div className="text-[11px] font-bold tracking-widest text-teal-700 uppercase">
+                    RESEARCH COMPASS — SCIENTIFIC RESEARCH WORKSPACE
+                  </div>
+                  <h1 className="text-2xl font-bold text-blue-900 tracking-tight leading-tight">
+                    {mode === "patent"
+                      ? `PATENT SPECIFICATION DRAFT: ${document.title.toUpperCase()}`
+                      : document.title}
+                  </h1>
+                  <p className="text-sm italic text-slate-600 max-w-xl mx-auto">
+                    {project.research_question || project.research_field}
+                  </p>
+
+                  {/* Patent Warning Box if patent mode */}
+                  {mode === "patent" && (
+                    <div className="bg-amber-50 border-l-4 border-amber-500 p-3.5 rounded-r-lg text-left my-4">
+                      <div className="text-xs font-bold text-amber-900 uppercase">
+                        AI-Generated Patent-Oriented Draft — Requires Professional Review
+                      </div>
+                      <p className="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                        This document is a preliminary patent-oriented technical disclosure generated to assist research inventors in structuring claims and architectural descriptions. It does NOT constitute a formal legal patent filing. AI-generated content should be reviewed by a qualified patent attorney or patent agent before filing.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Metadata Table */}
+                  <div className="pt-4 max-w-lg mx-auto">
+                    <table className="w-full text-xs border border-slate-200 rounded-lg overflow-hidden text-left">
+                      <tbody>
+                        <tr className="border-b border-slate-100 bg-slate-50">
+                          <td className="p-2 font-semibold text-slate-700 w-2/5">Research Project ID</td>
+                          <td className="p-2 font-mono text-slate-900">{project.id}</td>
+                        </tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="p-2 font-semibold text-slate-700 bg-slate-50">Scientific Field</td>
+                          <td className="p-2 text-slate-900">{project.research_field}</td>
+                        </tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="p-2 font-semibold text-slate-700 bg-slate-50">Document Mode</td>
+                          <td className="p-2 text-slate-900">{mode === "patent" ? "Patent-Oriented Technical Draft" : "Academic Manuscript"}</td>
+                        </tr>
+                        <tr className="border-b border-slate-100">
+                          <td className="p-2 font-semibold text-slate-700 bg-slate-50">Draft Version</td>
+                          <td className="p-2 text-slate-900">Version {document.version}</td>
+                        </tr>
+                        <tr>
+                          <td className="p-2 font-semibold text-slate-700 bg-slate-50">Completeness Score</td>
+                          <td className="p-2 text-teal-700 font-bold">{document.completeness_score}%</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* 2. Table of Contents Preview */}
+                <div className="space-y-2 pb-8 border-b border-slate-100">
+                  <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wider">
+                    Table of Contents
+                  </h3>
+                  <div className="space-y-1 text-xs">
+                    {activeSectionsList.map((sec, idx) => (
+                      <div
+                        key={sec.key}
+                        className="flex items-center justify-between text-slate-600 hover:text-blue-700 cursor-pointer py-0.5 group"
+                        onClick={() => handleEditBeforeDownload(sec.key)}
+                        title="Click to jump to editor for this section"
+                      >
+                        <span className="font-medium group-hover:underline">
+                          {idx + 1}. {sec.title}
+                        </span>
+                        <span className="text-slate-300 font-mono text-[11px] truncate mx-2">
+                          ....................................................................................................
+                        </span>
+                        <span className="text-teal-700 font-semibold text-[11px]">
+                          Section {idx + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Document Body Sections Preview */}
+                <div className="space-y-8">
+                  {activeSectionsList.map((sec, idx) => {
+                    const content = document.sections[sec.key] || "[Content pending]";
+                    const sourceLink = document.sources[sec.key];
+
+                    return (
+                      <div key={sec.key} className="space-y-2 group">
+                        <div className="flex items-center justify-between">
+                          <h2 className="text-base font-bold text-blue-900 border-b border-slate-100 pb-1 w-full flex items-center justify-between">
+                            <span>
+                              {idx + 1}. {sec.title}
+                            </span>
+                            <Button
+                              onClick={() => handleEditBeforeDownload(sec.key)}
+                              size="sm"
+                              variant="ghost"
+                              className="opacity-0 group-hover:opacity-100 text-[11px] h-6 px-2 text-slate-400 hover:text-blue-600 transition-opacity"
+                            >
+                              <Edit3 className="w-3 h-3 mr-1" />
+                              Edit Before Download
+                            </Button>
+                          </h2>
+                        </div>
+
+                        {sec.key === "abstract" ? (
+                          <div className="bg-slate-50 border-l-4 border-teal-600 p-4 rounded-r-lg text-xs italic text-slate-700 leading-relaxed">
+                            {content}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap font-normal">
+                            {content}
+                          </div>
+                        )}
+
+                        {sourceLink && (sourceLink.paper_titles.length > 0 || sourceLink.finding_titles.length > 0) && (
+                          <div className="text-[10px] text-slate-400 italic pt-1">
+                            [Evidence Provenance: {sourceLink.paper_titles.slice(0, 2).join("; ") || sourceLink.finding_titles.slice(0, 2).join("; ")}]
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0">
+              <span className="text-xs text-slate-500">
+                Ready to generate formatted Microsoft Word document (.docx)
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setIsPreviewOpen(false)}
+                  variant="outline"
+                  className="btn-interactive text-xs font-semibold rounded-xl border-slate-200"
+                >
+                  Close Preview
+                </Button>
+                <Button
+                  onClick={handleDownloadWordDocx}
+                  disabled={isExportingDocx}
+                  className="btn-interactive text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  Download as Word (.DOCX)
+                </Button>
+              </div>
             </div>
           </div>
         </div>

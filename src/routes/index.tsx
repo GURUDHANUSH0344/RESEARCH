@@ -49,7 +49,7 @@ function ResearchCompassApp() {
 
   const refreshProjects = async () => {
     try {
-      const list = await workspaceService.getAllProjects();
+      const list = await workspaceService.getProjects();
       setAllProjects(list);
     } catch {
       // Fallback
