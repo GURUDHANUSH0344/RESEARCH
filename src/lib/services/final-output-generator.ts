@@ -20,6 +20,8 @@ export interface SectionDefinition {
   title: string;
   description: string;
   placeholder: string;
+  isPreamble?: boolean;
+  isReferences?: boolean;
 }
 
 export const PAPER_SECTIONS: SectionDefinition[] = [

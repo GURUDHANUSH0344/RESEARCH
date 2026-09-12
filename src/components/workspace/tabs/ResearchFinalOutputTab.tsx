@@ -1271,7 +1271,7 @@ export function ResearchFinalOutputTab({
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
                 <span className="text-[10px] font-semibold uppercase text-slate-400">Total Citations</span>
-                <div className="text-xl font-bold font-heading text-slate-900">{citationAudit?.total_citations || 0}</div>
+                <div className="text-xl font-bold font-heading text-slate-900">{citationAudit?.total_in_text_citations ?? citationAudit?.total_citations ?? 0}</div>
               </div>
               <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 text-center">
                 <span className="text-[10px] font-semibold uppercase text-emerald-600">Verified Sources</span>
@@ -1771,7 +1771,7 @@ export function ResearchFinalOutputTab({
                 {/* 3. Numbered Sections */}
                 <div className="space-y-8">
                   {activeSectionsList
-                    .filter((s) => !s.isPreamble)
+                    .filter((s) => !Boolean((s as any).isPreamble))
                     .map((sec, idx) => {
                       const content = document.sections[sec.key] || "[Content pending]";
 

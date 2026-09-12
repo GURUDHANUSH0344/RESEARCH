@@ -168,6 +168,7 @@ export interface CitationAuditItem {
 
 export interface CitationAuditResult {
   total_in_text_citations: number;
+  total_citations?: number;
   unique_citations: number;
   matched_citations: number;
   citations: CitationAuditItem[];
