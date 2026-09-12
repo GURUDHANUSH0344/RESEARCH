@@ -22,48 +22,53 @@ interface ResearchTimelineTabProps {
 
 export function ResearchTimelineTab({ project }: ResearchTimelineTabProps) {
   const [events, setEvents] = useState<ResearchTimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>("all");
 
   useEffect(() => {
-    workspaceService.getTimeline(project.id).then(setEvents);
+    setLoading(true);
+    workspaceService
+      .getTimeline(project.id)
+      .then((data) => setEvents(data))
+      .finally(() => setLoading(false));
   }, [project.id]);
 
   const getEventIcon = (type: ResearchTimelineEvent["event_type"]) => {
     switch (type) {
       case "research_created":
-        return <Activity className="w-4 h-4 text-blue-600" />;
+        return <Activity className="w-3.5 h-3.5 text-blue-600" />;
       case "paper_added":
       case "paper_removed":
-        return <BookOpen className="w-4 h-4 text-indigo-600" />;
+        return <BookOpen className="w-3.5 h-3.5 text-indigo-600" />;
       case "note_created":
       case "note_updated":
-        return <FileText className="w-4 h-4 text-teal-600" />;
+        return <FileText className="w-3.5 h-3.5 text-teal-600" />;
       case "finding_added":
-        return <Sparkles className="w-4 h-4 text-amber-600" />;
+        return <Sparkles className="w-3.5 h-3.5 text-amber-600" />;
       case "task_created":
       case "task_completed":
-        return <CheckCircle2 className="w-4 h-4 text-emerald-600" />;
+        return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />;
       case "ai_chat":
-        return <Bot className="w-4 h-4 text-purple-600" />;
+        return <Bot className="w-3.5 h-3.5 text-purple-600" />;
       default:
-        return <Clock className="w-4 h-4 text-slate-500" />;
+        return <Clock className="w-3.5 h-3.5 text-slate-500" />;
     }
   };
 
   const getEventBadge = (type: ResearchTimelineEvent["event_type"]) => {
     switch (type) {
       case "paper_added":
-        return "bg-indigo-50 text-indigo-700 border-indigo-200";
+        return "bg-indigo-50 text-indigo-700 border-indigo-200/70";
       case "note_created":
-        return "bg-teal-50 text-teal-700 border-teal-200";
+        return "bg-teal-50 text-teal-700 border-teal-200/70";
       case "task_completed":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200/70";
       case "finding_added":
-        return "bg-amber-50 text-amber-700 border-amber-200";
+        return "bg-amber-50 text-amber-700 border-amber-200/70";
       case "ai_chat":
-        return "bg-purple-50 text-purple-700 border-purple-200";
+        return "bg-purple-50 text-purple-700 border-purple-200/70";
       default:
-        return "bg-slate-100 text-slate-700 border-slate-200";
+        return "bg-slate-100 text-slate-700 border-slate-200/70";
     }
   };
 
@@ -80,13 +85,13 @@ export function ResearchTimelineTab({ project }: ResearchTimelineTabProps) {
   return (
     <div className="space-y-6 max-w-4xl mx-auto py-2">
       {/* Header */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="card-mice p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
               Research Activity Timeline
             </h2>
-            <Badge variant="outline" className="bg-slate-100 text-slate-700">
+            <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-200 text-xs font-semibold px-2.5 py-0.5">
               {events.length} Events
             </Badge>
           </div>
@@ -97,7 +102,7 @@ export function ResearchTimelineTab({ project }: ResearchTimelineTabProps) {
         </div>
 
         {/* Filter Buttons */}
-        <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-xl">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
           {[
             { id: "all", label: "All" },
             { id: "papers", label: "Papers" },
@@ -109,9 +114,9 @@ export function ResearchTimelineTab({ project }: ResearchTimelineTabProps) {
             <button
               key={f.id}
               onClick={() => setFilterType(f.id)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 ${
                 filterType === f.id
-                  ? "bg-white text-slate-900 shadow-xs"
+                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -122,21 +127,33 @@ export function ResearchTimelineTab({ project }: ResearchTimelineTabProps) {
       </div>
 
       {/* Timeline Stream */}
-      {filteredEvents.length > 0 ? (
-        <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
+      {loading ? (
+        <div className="space-y-4 pl-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card-mice p-5 space-y-2.5">
+              <div className="flex justify-between">
+                <div className="skeleton-shimmer h-4 w-40" />
+                <div className="skeleton-shimmer h-3 w-20" />
+              </div>
+              <div className="skeleton-shimmer h-3 w-3/4" />
+            </div>
+          ))}
+        </div>
+      ) : filteredEvents.length > 0 ? (
+        <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200/80">
           {filteredEvents.map((event) => (
             <div key={event.id} className="relative group">
               {/* Event Bullet Node */}
-              <div className="absolute -left-6 top-1.5 w-5 h-5 rounded-full bg-white border-2 border-blue-500 flex items-center justify-center shadow-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+              <div className="absolute -left-6 top-2 w-5 h-5 rounded-full bg-white border-2 border-slate-400 group-hover:border-blue-600 flex items-center justify-center shadow-xs transition-colors duration-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400 group-hover:bg-blue-600 transition-colors duration-200" />
               </div>
 
               {/* Event Card */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-slate-300 transition-all space-y-2">
+              <div className="card-mice card-mice-hover p-5 transition-all duration-200 space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getEventBadge(
+                      className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getEventBadge(
                         event.event_type
                       )}`}
                     >
@@ -144,13 +161,13 @@ export function ResearchTimelineTab({ project }: ResearchTimelineTabProps) {
                       <span>{event.event_type.replace("_", " ")}</span>
                     </span>
 
-                    <h3 className="text-sm font-bold text-slate-900">
+                    <h3 className="text-sm font-bold font-heading text-slate-900">
                       {event.title}
                     </h3>
                   </div>
 
                   <span className="flex items-center gap-1 text-xs text-slate-400 font-medium">
-                    <Clock className="w-3 h-3" />
+                    <Clock className="w-3 h-3 text-slate-400" />
                     {new Date(event.timestamp).toLocaleString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -160,7 +177,7 @@ export function ResearchTimelineTab({ project }: ResearchTimelineTabProps) {
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-normal">
                   {event.description}
                 </p>
               </div>
@@ -168,9 +185,9 @@ export function ResearchTimelineTab({ project }: ResearchTimelineTabProps) {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs space-y-3">
-          <History className="w-12 h-12 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No Timeline Events Recorded</h3>
+        <div className="card-mice p-12 text-center space-y-3">
+          <History className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold font-heading text-slate-800">No Timeline Events Recorded</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
             Activities such as adding papers, taking notes, creating tasks, and consulting AI will be logged chronologically here.
           </p>

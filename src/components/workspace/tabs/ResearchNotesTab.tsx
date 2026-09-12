@@ -25,6 +25,7 @@ interface ResearchNotesTabProps {
 
 export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabProps) {
   const [notes, setNotes] = useState<ResearchNote[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -38,9 +39,14 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
   const [isPinned, setIsPinned] = useState(false);
 
   const loadNotes = async () => {
-    const data = await workspaceService.getNotes(project.id);
-    setNotes(data);
-    onNotesChanged?.(data.length);
+    setLoading(true);
+    try {
+      const data = await workspaceService.getNotes(project.id);
+      setNotes(data);
+      onNotesChanged?.(data.length);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -94,7 +100,7 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
           tags,
           pinned: isPinned,
         });
-        toast.success("Note created in research workspace");
+        toast.success("Note saved to research workspace");
       }
       setIsEditorOpen(false);
       loadNotes();
@@ -136,33 +142,33 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
   const getCategoryColor = (cat: ResearchNote["category"]) => {
     switch (cat) {
       case "methodology":
-        return "bg-blue-50 text-blue-700 border-blue-200";
+        return "bg-sky-50 text-sky-700 border-sky-200/70";
       case "literature":
-        return "bg-purple-50 text-purple-700 border-purple-200";
+        return "bg-indigo-50 text-indigo-700 border-indigo-200/70";
       case "observation":
-        return "bg-amber-50 text-amber-700 border-amber-200";
+        return "bg-amber-50 text-amber-700 border-amber-200/70";
       case "idea":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200/70";
       default:
-        return "bg-slate-50 text-slate-700 border-slate-200";
+        return "bg-slate-50 text-slate-700 border-slate-200/70";
     }
   };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-2">
       {/* Header & Controls */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="card-mice p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
               Research Notes
             </h2>
-            <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200">
+            <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200 text-xs font-semibold px-2.5 py-0.5">
               {notes.length} Notes
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Notes strictly associated with Research ID:{" "}
+            Notes and observations strictly associated with Research ID:{" "}
             <span className="font-mono font-semibold text-slate-700">{project.id}</span>
           </p>
         </div>
@@ -171,7 +177,7 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
           <Button
             onClick={handleOpenNewNote}
             size="sm"
-            className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5"
+            className="btn-interactive bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5"
           >
             <PlusCircle className="w-3.5 h-3.5" />
             <span>Add Note</span>
@@ -187,18 +193,18 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search notes in this research by title, content, or tags..."
-            className="pl-10 h-10 bg-white border-slate-200 text-xs rounded-xl shadow-2xs"
+            className="pl-10 h-10 bg-white border-slate-200/80 text-xs rounded-xl shadow-2xs focus-visible:ring-teal-600/20"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
           {["all", "methodology", "literature", "observation", "idea", "general"].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all duration-150 ${
                 selectedCategory === cat
-                  ? "bg-white text-slate-900 shadow-xs"
+                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -209,15 +215,36 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
       </div>
 
       {/* Notes Grid */}
-      {filteredNotes.length > 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card-mice p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="skeleton-shimmer h-4 w-24" />
+                <div className="skeleton-shimmer h-4 w-12" />
+              </div>
+              <div className="skeleton-shimmer h-5 w-3/4" />
+              <div className="space-y-2">
+                <div className="skeleton-shimmer h-3 w-full" />
+                <div className="skeleton-shimmer h-3 w-5/6" />
+                <div className="skeleton-shimmer h-3 w-4/6" />
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex justify-between">
+                <div className="skeleton-shimmer h-4 w-20" />
+                <div className="skeleton-shimmer h-3 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredNotes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredNotes.map((note) => (
             <div
               key={note.id}
-              className={`bg-white rounded-2xl p-6 border shadow-xs transition-all space-y-3 flex flex-col justify-between ${
+              className={`card-mice card-mice-hover p-6 transition-all duration-200 space-y-3.5 flex flex-col justify-between ${
                 note.pinned
-                  ? "border-teal-300 ring-1 ring-teal-200/50 bg-teal-50/10"
-                  : "border-slate-200/80 hover:border-slate-300"
+                  ? "border-teal-300 ring-1 ring-teal-200/40 bg-teal-50/15"
+                  : ""
               }`}
             >
               <div className="space-y-2.5">
@@ -243,8 +270,8 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
                       onClick={() => togglePin(note)}
                       className={`p-1.5 rounded-lg transition-colors ${
                         note.pinned
-                          ? "text-teal-600 bg-teal-50"
-                          : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                          ? "text-teal-700 bg-teal-50"
+                          : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                       }`}
                       title={note.pinned ? "Unpin note" : "Pin note"}
                     >
@@ -267,21 +294,21 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
                   </div>
                 </div>
 
-                <h3 className="text-base font-bold text-slate-900 leading-snug">
+                <h3 className="text-base font-bold font-heading text-slate-900 leading-snug">
                   {note.title}
                 </h3>
 
-                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap line-clamp-6">
+                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap line-clamp-5 font-normal">
                   {note.content}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
-                <div className="flex flex-wrap gap-1">
+              <div className="pt-3 border-t border-slate-100/90 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                <div className="flex flex-wrap gap-1.5">
                   {note.tags.map((t, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-medium"
+                      className="inline-flex items-center gap-1 bg-slate-100/80 text-slate-600 px-2 py-0.5 rounded text-[10px] font-medium"
                     >
                       <Tag className="w-2.5 h-2.5 text-slate-400" />
                       {t}
@@ -289,8 +316,8 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
                   ))}
                 </div>
 
-                <span className="flex items-center gap-1 text-[10px]">
-                  <Clock className="w-3 h-3" />
+                <span className="flex items-center gap-1 text-[11px] text-slate-400 font-medium">
+                  <Clock className="w-3 h-3 text-slate-400" />
                   {new Date(note.updated_at).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
@@ -301,16 +328,16 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs space-y-3">
-          <FileText className="w-12 h-12 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No Notes Recorded</h3>
+        <div className="card-mice p-12 text-center space-y-3">
+          <FileText className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold font-heading text-slate-800">No Notes Recorded</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
             Document research observations, methodological nuances, or theoretical ideas specifically for this research inquiry.
           </p>
           <Button
             onClick={handleOpenNewNote}
             size="sm"
-            className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold h-9 rounded-xl shadow-xs"
+            className="btn-interactive bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold h-9 rounded-xl shadow-xs"
           >
             Create First Note
           </Button>
@@ -319,9 +346,9 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
 
       {/* Editor Modal */}
       {isEditorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 border border-slate-200">
-            <h3 className="text-base font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 border border-slate-200/80 animate-fade-slide">
+            <h3 className="text-base font-bold font-heading text-slate-900">
               {editingNoteId ? "Edit Research Note" : "New Research Note"}
             </h3>
 
@@ -392,13 +419,13 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
                     type="button"
                     variant="outline"
                     onClick={() => setIsEditorOpen(false)}
-                    className="text-xs rounded-xl"
+                    className="btn-interactive text-xs rounded-xl border-slate-200"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl"
+                    className="btn-interactive bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold rounded-xl"
                   >
                     Save Note
                   </Button>

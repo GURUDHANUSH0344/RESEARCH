@@ -24,6 +24,7 @@ interface ResearchTasksTabProps {
 
 export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabProps) {
   const [tasks, setTasks] = useState<ResearchTask[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
   const [isAddOpen, setIsAddOpen] = useState(false);
 
@@ -34,10 +35,15 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
   const [dueDate, setDueDate] = useState("");
 
   const loadTasks = async () => {
-    const data = await workspaceService.getTasks(project.id);
-    setTasks(data);
-    const completed = data.filter((t) => t.status === "completed").length;
-    onTasksChanged?.({ total: data.length, completed });
+    setLoading(true);
+    try {
+      const data = await workspaceService.getTasks(project.id);
+      setTasks(data);
+      const completed = data.filter((t) => t.status === "completed").length;
+      onTasksChanged?.({ total: data.length, completed });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -103,25 +109,25 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
   const getPriorityStyle = (p: ResearchTask["priority"]) => {
     switch (p) {
       case "high":
-        return "bg-rose-50 text-rose-700 border-rose-200";
+        return "bg-rose-50 text-rose-700 border-rose-200/80";
       case "low":
-        return "bg-slate-100 text-slate-700 border-slate-200";
+        return "bg-slate-100 text-slate-700 border-slate-200/80";
       default:
-        return "bg-blue-50 text-blue-700 border-blue-200";
+        return "bg-blue-50 text-blue-700 border-blue-200/80";
     }
   };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-2">
       {/* Header & Progress Bar */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+      <div className="card-mice p-6 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
                 Research Tasks & Milestone Progress
               </h2>
-              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-semibold px-2.5 py-0.5">
                 {completedCount} / {tasks.length} Completed
               </Badge>
             </div>
@@ -135,7 +141,7 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
             <Button
               onClick={() => setIsAddOpen(true)}
               size="sm"
-              className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5"
+              className="btn-interactive bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>Add Task</span>
@@ -144,14 +150,14 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
         </div>
 
         {/* Dynamic Progress Bar */}
-        <div className="space-y-2 pt-2">
+        <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-600">Research Progress Completion</span>
+            <span className="text-slate-600 font-medium">Research Milestone Completion</span>
             <span className="text-purple-700 font-bold">{progress}%</span>
           </div>
-          <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200/60">
+          <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200/60">
             <div
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 h-full rounded-full transition-all duration-500"
+              className="bg-purple-600 h-full rounded-full transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -160,27 +166,27 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
 
       {/* Filter Tabs */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+        <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
           <button
             onClick={() => setFilter("all")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-              filter === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600"
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 ${
+              filter === "all" ? "bg-white text-slate-900 shadow-2xs font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             All ({tasks.length})
           </button>
           <button
             onClick={() => setFilter("pending")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-              filter === "pending" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600"
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 ${
+              filter === "pending" ? "bg-white text-slate-900 shadow-2xs font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Pending ({tasks.length - completedCount})
           </button>
           <button
             onClick={() => setFilter("completed")}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-              filter === "completed" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600"
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 ${
+              filter === "completed" ? "bg-white text-slate-900 shadow-2xs font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Completed ({completedCount})
@@ -189,7 +195,22 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
       </div>
 
       {/* Task List */}
-      {filteredTasks.length > 0 ? (
+      {loading ? (
+        <div className="space-y-2.5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="card-mice p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3 w-3/4">
+                <div className="skeleton-shimmer w-5 h-5 rounded-md shrink-0" />
+                <div className="space-y-2 w-full">
+                  <div className="skeleton-shimmer h-4 w-2/3" />
+                  <div className="skeleton-shimmer h-3 w-1/3" />
+                </div>
+              </div>
+              <div className="skeleton-shimmer h-6 w-16" />
+            </div>
+          ))}
+        </div>
+      ) : filteredTasks.length > 0 ? (
         <div className="space-y-2.5">
           {filteredTasks.map((task) => {
             const isCompleted = task.status === "completed";
@@ -197,16 +218,16 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
             return (
               <div
                 key={task.id}
-                className={`bg-white rounded-2xl p-4 md:p-5 border transition-all flex items-start justify-between gap-4 ${
+                className={`card-mice p-4 md:p-5 transition-all duration-200 flex items-start justify-between gap-4 ${
                   isCompleted
-                    ? "border-slate-200/60 bg-slate-50/50 opacity-80"
-                    : "border-slate-200/80 hover:border-purple-200 shadow-xs"
+                    ? "border-slate-200/60 bg-slate-50/40 opacity-80"
+                    : "card-mice-hover"
                 }`}
               >
                 <div className="flex items-start gap-3.5 min-w-0">
                   <button
                     onClick={() => handleToggleTask(task)}
-                    className="mt-0.5 text-slate-400 hover:text-purple-600 transition-colors shrink-0"
+                    className="btn-interactive mt-0.5 text-slate-400 hover:text-purple-600 transition-colors shrink-0"
                   >
                     {isCompleted ? (
                       <CheckCircle2 className="w-5 h-5 text-emerald-600 fill-emerald-50" />
@@ -217,15 +238,17 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
 
                   <div className="space-y-1 min-w-0">
                     <h3
-                      className={`text-sm font-bold text-slate-900 leading-snug ${
-                        isCompleted ? "line-through text-slate-500" : ""
+                      className={`text-sm font-bold font-heading text-slate-900 leading-snug transition-colors duration-150 ${
+                        isCompleted ? "line-through text-slate-400 font-normal" : ""
                       }`}
                     >
                       {task.title}
                     </h3>
 
                     {task.description && (
-                      <p className="text-xs text-slate-600 leading-relaxed">
+                      <p className={`text-xs text-slate-600 leading-relaxed font-normal ${
+                        isCompleted ? "line-through text-slate-400" : ""
+                      }`}>
                         {task.description}
                       </p>
                     )}
@@ -269,16 +292,16 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs space-y-3">
-          <CheckSquare className="w-12 h-12 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No Tasks in this Filter</h3>
+        <div className="card-mice p-12 text-center space-y-3">
+          <CheckSquare className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold font-heading text-slate-800">No Tasks in this Filter</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
             Plan your research roadmap, experiments, and review milestones for this research project.
           </p>
           <Button
             onClick={() => setIsAddOpen(true)}
             size="sm"
-            className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold h-9 rounded-xl shadow-xs"
+            className="btn-interactive bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold h-9 rounded-xl shadow-xs"
           >
             Create Task
           </Button>
@@ -287,9 +310,9 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
 
       {/* Add Task Modal */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200">
-            <h3 className="text-base font-bold text-slate-900">Add Research Task</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200/80 animate-fade-slide">
+            <h3 className="text-base font-bold font-heading text-slate-900">Add Research Task</h3>
 
             <form onSubmit={handleCreateTask} className="space-y-3.5">
               <div>
@@ -344,13 +367,13 @@ export function ResearchTasksTab({ project, onTasksChanged }: ResearchTasksTabPr
                   type="button"
                   variant="outline"
                   onClick={() => setIsAddOpen(false)}
-                  className="text-xs rounded-xl"
+                  className="btn-interactive text-xs rounded-xl border-slate-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl"
+                  className="btn-interactive bg-purple-700 hover:bg-purple-800 text-white text-xs font-semibold rounded-xl"
                 >
                   Save Task
                 </Button>

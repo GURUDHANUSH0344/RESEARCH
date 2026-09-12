@@ -26,6 +26,7 @@ interface ResearchFindingsTabProps {
 
 export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFindingsTabProps) {
   const [findings, setFindings] = useState<ResearchFinding[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -40,9 +41,14 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
   const [feasibility, setFeasibility] = useState(8);
 
   const loadFindings = async () => {
-    const data = await workspaceService.getFindings(project.id);
-    setFindings(data);
-    onFindingsChanged?.(data.length);
+    setLoading(true);
+    try {
+      const data = await workspaceService.getFindings(project.id);
+      setFindings(data);
+      onFindingsChanged?.(data.length);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -98,31 +104,31 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
     switch (t) {
       case "gap":
         return {
-          bg: "bg-rose-50 text-rose-700 border-rose-200",
+          bg: "bg-rose-50 text-rose-700 border-rose-200/80",
           icon: AlertTriangle,
           label: "Research Gap",
         };
       case "trend":
         return {
-          bg: "bg-blue-50 text-blue-700 border-blue-200",
+          bg: "bg-sky-50 text-sky-700 border-sky-200/80",
           icon: TrendingUp,
           label: "Trend",
         };
       case "statistic":
         return {
-          bg: "bg-purple-50 text-purple-700 border-purple-200",
+          bg: "bg-indigo-50 text-indigo-700 border-indigo-200/80",
           icon: BarChart2,
           label: "Statistic",
         };
       case "insight":
         return {
-          bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          bg: "bg-emerald-50 text-emerald-700 border-emerald-200/80",
           icon: Lightbulb,
           label: "AI Insight",
         };
       default:
         return {
-          bg: "bg-teal-50 text-teal-700 border-teal-200",
+          bg: "bg-teal-50 text-teal-700 border-teal-200/80",
           icon: CheckCircle2,
           label: "Empirical Finding",
         };
@@ -132,13 +138,13 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-2">
       {/* Header & Controls */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="card-mice p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
               Key Findings & Discoveries
             </h2>
-            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs font-semibold px-2.5 py-0.5">
               {findings.length} Findings
             </Badge>
           </div>
@@ -152,7 +158,7 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
           <Button
             onClick={() => setIsAddOpen(true)}
             size="sm"
-            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5"
+            className="btn-interactive bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5"
           >
             <PlusCircle className="w-3.5 h-3.5" />
             <span>Add Finding</span>
@@ -168,18 +174,18 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search findings, gaps, and statistics..."
-            className="pl-10 h-10 bg-white border-slate-200 text-xs rounded-xl shadow-2xs"
+            className="pl-10 h-10 bg-white border-slate-200/80 text-xs rounded-xl shadow-2xs focus-visible:ring-slate-400/20"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
           {["all", "finding", "gap", "trend", "statistic", "insight"].map((t) => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all duration-150 ${
                 filterType === t
-                  ? "bg-white text-slate-900 shadow-xs"
+                  ? "bg-white text-slate-900 shadow-2xs font-semibold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -190,7 +196,28 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
       </div>
 
       {/* Findings Grid */}
-      {filteredFindings.length > 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card-mice p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="skeleton-shimmer h-4 w-28" />
+                <div className="skeleton-shimmer h-4 w-6" />
+              </div>
+              <div className="skeleton-shimmer h-5 w-4/5" />
+              <div className="space-y-2">
+                <div className="skeleton-shimmer h-3 w-full" />
+                <div className="skeleton-shimmer h-3 w-5/6" />
+              </div>
+              <div className="pt-3 border-t border-slate-100 flex justify-between">
+                <div className="skeleton-shimmer h-3 w-20" />
+                <div className="skeleton-shimmer h-3 w-16" />
+                <div className="skeleton-shimmer h-3 w-16" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredFindings.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredFindings.map((finding) => {
             const style = getTypeStyle(finding.type);
@@ -199,12 +226,12 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
             return (
               <div
                 key={finding.id}
-                className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:border-amber-300 transition-all space-y-4 flex flex-col justify-between"
+                className="card-mice card-mice-hover p-6 transition-all duration-200 space-y-4 flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span
-                      className={`inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border ${style.bg}`}
+                      className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded border ${style.bg}`}
                     >
                       <Icon className="w-3 h-3" />
                       {style.label}
@@ -219,11 +246,11 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
                     </button>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-900 leading-snug">
+                  <h3 className="text-base font-bold font-heading text-slate-900 leading-snug">
                     {finding.title}
                   </h3>
 
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
                     {finding.description}
                   </p>
                 </div>
@@ -233,20 +260,20 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
                     <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex items-start gap-2">
                       <BookOpen className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
                       <span className="text-[11px] text-slate-600 font-medium">
-                        <strong>Evidence:</strong> {finding.evidence}
+                        <strong className="text-slate-800">Evidence:</strong> {finding.evidence}
                       </span>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 font-semibold">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 font-medium">
                     {finding.confidence && (
-                      <span>Confidence: <strong className="text-teal-700">{finding.confidence}</strong></span>
+                      <span>Confidence: <strong className="text-teal-700 font-semibold">{finding.confidence}</strong></span>
                     )}
                     {finding.novelty && (
-                      <span>Novelty: <strong className="text-purple-700">{finding.novelty}/10</strong></span>
+                      <span>Novelty: <strong className="text-indigo-700 font-semibold">{finding.novelty}/10</strong></span>
                     )}
                     {finding.feasibility && (
-                      <span>Feasibility: <strong className="text-blue-700">{finding.feasibility}/10</strong></span>
+                      <span>Feasibility: <strong className="text-blue-700 font-semibold">{finding.feasibility}/10</strong></span>
                     )}
                   </div>
                 </div>
@@ -255,16 +282,16 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
           })}
         </div>
       ) : (
-        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs space-y-3">
-          <Sparkles className="w-12 h-12 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No Key Findings Recorded</h3>
+        <div className="card-mice p-12 text-center space-y-3">
+          <Sparkles className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold font-heading text-slate-800">No Key Findings Recorded</h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
             Document literature gaps, experimental insights, and quantitative statistics derived from this research corpus.
           </p>
           <Button
             onClick={() => setIsAddOpen(true)}
             size="sm"
-            className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold h-9 rounded-xl shadow-xs"
+            className="btn-interactive bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold h-9 rounded-xl shadow-xs"
           >
             Record Finding
           </Button>
@@ -273,9 +300,9 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
 
       {/* Add Finding Modal */}
       {isAddOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 border border-slate-200">
-            <h3 className="text-base font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 border border-slate-200/80 animate-fade-slide">
+            <h3 className="text-base font-bold font-heading text-slate-900">
               Record Key Finding / Insight
             </h3>
 
@@ -326,7 +353,7 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Elaborate on the finding, its theoretical underpinnings, and significance..."
-                  className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500/20 focus:outline-none mt-1"
+                  className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-400/20 focus:outline-none mt-1"
                 />
               </div>
 
@@ -370,13 +397,13 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
                   type="button"
                   variant="outline"
                   onClick={() => setIsAddOpen(false)}
-                  className="text-xs rounded-xl"
+                  className="btn-interactive text-xs rounded-xl border-slate-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl"
+                  className="btn-interactive bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl"
                 >
                   Record Finding
                 </Button>

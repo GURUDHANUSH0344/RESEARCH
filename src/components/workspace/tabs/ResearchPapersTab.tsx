@@ -195,7 +195,8 @@ export function ResearchPapersTab({ project, onUpdateProject }: ResearchPapersTa
             return (
               <div
                 key={paper.id || idx}
-                className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:border-blue-300 transition-all space-y-3"
+                style={{ animationDelay: `${idx * 30}ms` }}
+                className="card-mice card-mice-hover bg-white p-6 rounded-2xl border border-slate-200/80 hover:border-blue-300 transition-all space-y-3 animate-fade-slide"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                   <div className="space-y-1 max-w-4xl">

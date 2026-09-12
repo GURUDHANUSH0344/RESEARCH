@@ -147,32 +147,32 @@ export function ResearchAssistantChat({ project }: ResearchAssistantChatProps) {
     <div className="space-y-4 max-w-5xl mx-auto py-2 h-[calc(100vh-8.5rem)] flex flex-col">
       {/* Header with Current Research Context */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 shadow-2xs">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 shadow-2xs shrink-0">
             <Bot className="w-5 h-5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-900">
-                AI Research Assistant
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-heading text-sm font-bold text-slate-900 truncate">
+                AI Assistant — {project?.title || "Research Workspace"}
               </h2>
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200 shrink-0">
                 <ShieldCheck className="w-3 h-3 text-teal-600" />
-                Isolated Context
+                Research Context: {project?.title ? project.title.slice(0, 24) + "..." : "Isolated"}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 font-medium">
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
               Grounded strictly in {paperCount} papers &bull; {notes.length} notes &bull; {findings.length} findings
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button
             onClick={handleExportChat}
             variant="ghost"
             size="sm"
-            className="text-slate-500 hover:text-slate-800 text-xs h-8 px-2.5 rounded-lg"
+            className="text-slate-500 hover:text-slate-800 text-xs h-8 px-2.5 rounded-lg btn-interactive"
             title="Export conversation transcript"
           >
             <Download className="w-3.5 h-3.5 mr-1" />
@@ -182,7 +182,7 @@ export function ResearchAssistantChat({ project }: ResearchAssistantChatProps) {
             onClick={handleClearChat}
             variant="ghost"
             size="sm"
-            className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs h-8 px-2.5 rounded-lg"
+            className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs h-8 px-2.5 rounded-lg btn-interactive"
             title="Clear chat history for this research"
           >
             <Trash2 className="w-3.5 h-3.5 mr-1" />
@@ -198,7 +198,7 @@ export function ResearchAssistantChat({ project }: ResearchAssistantChatProps) {
           return (
             <div
               key={msg.id || idx}
-              className={`flex gap-3 max-w-3xl ${isUser ? "ml-auto flex-row-reverse" : "mr-auto"}`}
+              className={`flex gap-3 max-w-3xl animate-fade-slide ${isUser ? "ml-auto flex-row-reverse" : "mr-auto"}`}
             >
               <div
                 className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${
@@ -214,8 +214,8 @@ export function ResearchAssistantChat({ project }: ResearchAssistantChatProps) {
                 <div
                   className={`p-4 rounded-2xl text-xs leading-relaxed ${
                     isUser
-                      ? "bg-blue-600 text-white rounded-tr-xs"
-                      : "bg-slate-50 text-slate-800 border border-slate-200/60 rounded-tl-xs whitespace-pre-wrap"
+                      ? "bg-blue-600 text-white rounded-tr-xs shadow-xs"
+                      : "bg-slate-50 text-slate-800 border border-slate-200/70 rounded-tl-xs whitespace-pre-wrap shadow-2xs"
                   }`}
                 >
                   {msg.content}
@@ -233,13 +233,18 @@ export function ResearchAssistantChat({ project }: ResearchAssistantChatProps) {
         })}
 
         {isLoading && (
-          <div className="flex gap-3 max-w-3xl mr-auto">
+          <div className="flex gap-3 max-w-3xl mr-auto animate-fade-slide">
             <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 shrink-0">
               <Bot className="w-4 h-4" />
             </div>
-            <div className="bg-slate-50 border border-slate-200/60 p-4 rounded-2xl rounded-tl-xs flex items-center gap-2 text-xs text-slate-500">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-600" />
-              <span>Cross-referencing research papers, notes, and findings...</span>
+            <div className="bg-slate-50 border border-slate-200/70 p-4 rounded-2xl rounded-tl-xs space-y-2 w-72 sm:w-80 shadow-2xs">
+              <div className="flex items-center gap-2 text-xs text-purple-700 font-semibold mb-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Synthesizing isolated research context...</span>
+              </div>
+              <div className="h-3 w-full skeleton-shimmer" />
+              <div className="h-3 w-4/5 skeleton-shimmer" />
+              <div className="h-3 w-2/3 skeleton-shimmer" />
             </div>
           </div>
         )}
@@ -248,7 +253,7 @@ export function ResearchAssistantChat({ project }: ResearchAssistantChatProps) {
       </div>
 
       {/* Suggested Prompts */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0 select-none">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0 select-none no-scrollbar">
         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 shrink-0">
           <Lightbulb className="w-3 h-3 text-amber-500" />
           Prompt:
@@ -258,7 +263,7 @@ export function ResearchAssistantChat({ project }: ResearchAssistantChatProps) {
             key={idx}
             onClick={() => handleSend(prompt)}
             disabled={isLoading}
-            className="text-[11px] text-slate-600 bg-white hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 border border-slate-200/80 px-3 py-1 rounded-full whitespace-nowrap transition-colors shadow-2xs font-medium shrink-0"
+            className="text-[11px] text-slate-600 bg-white hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 border border-slate-200/80 px-3 py-1 rounded-full whitespace-nowrap transition-colors shadow-2xs font-medium shrink-0 cursor-pointer btn-interactive"
           >
             {prompt}
           </button>
@@ -279,14 +284,14 @@ export function ResearchAssistantChat({ project }: ResearchAssistantChatProps) {
           onClick={() => handleSend()}
           disabled={isLoading || !input.trim()}
           size="sm"
-          className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold h-9 px-4 rounded-xl shadow-xs shrink-0 flex items-center gap-1.5"
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl h-10 px-4 flex items-center gap-1.5 shrink-0 shadow-xs btn-interactive cursor-pointer"
         >
           {isLoading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
             <Send className="w-3.5 h-3.5" />
           )}
-          <span>Ask</span>
+          <span>Ask AI</span>
         </Button>
       </div>
     </div>

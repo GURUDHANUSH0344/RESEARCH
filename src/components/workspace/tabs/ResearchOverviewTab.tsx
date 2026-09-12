@@ -92,32 +92,33 @@ export function ResearchOverviewTab({
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-2">
-      {/* Workspace Isolation Banner */}
-      <div className="bg-gradient-to-r from-blue-900 to-[#0B2545] rounded-2xl p-6 text-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Workspace Isolation & Research Identity Card */}
+      <div className="card-mice p-6 bg-white border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-blue-500/30 text-blue-200 border border-blue-400/30">
+            <span className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+              <ShieldCheck className="w-3 h-3 inline mr-1" />
               Isolated Workspace
             </span>
-            <span className="text-xs text-blue-200 font-mono">
-              ID: <span className="text-white font-bold">{project.id}</span>
+            <span className="text-xs text-slate-400 font-mono">
+              ID: {project.id}
             </span>
           </div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+          <h2 className="font-heading text-xl md:text-2xl font-bold tracking-tight text-slate-900">
             {project.title}
-          </h1>
-          <p className="text-xs text-blue-200/90 font-medium">
+          </h2>
+          <p className="text-xs text-slate-500 font-normal">
             {project.research_field} &bull; All data, notes, and AI reasoning are strictly scoped to this research.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {!isEditing ? (
             <Button
               onClick={() => setIsEditing(true)}
               variant="outline"
               size="sm"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs"
+              className="border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold h-9 px-3.5 rounded-xl shadow-2xs btn-interactive cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5 mr-1.5" />
               Edit Scope
@@ -127,7 +128,7 @@ export function ResearchOverviewTab({
               onClick={handleSave}
               disabled={isSaving}
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs btn-interactive cursor-pointer"
             >
               <Check className="w-3.5 h-3.5 mr-1.5" />
               {isSaving ? "Saving..." : "Save Scope"}
@@ -141,17 +142,17 @@ export function ResearchOverviewTab({
         {/* Metric 1: Papers */}
         <div
           onClick={() => onNavigateTab("papers")}
-          className="card-scientific card-scientific-hover p-5 cursor-pointer bg-white flex items-center justify-between transition-all"
+          className="card-mice card-mice-hover p-5 cursor-pointer bg-white flex items-center justify-between transition-all group"
         >
           <div className="space-y-1">
             <span className="text-xs font-medium text-slate-500">Collected Papers</span>
-            <div className="text-2xl md:text-3xl font-extrabold text-slate-900">{paperCount}</div>
-            <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-1">
+            <div className="font-heading text-2xl md:text-3xl font-bold text-slate-900">{paperCount}</div>
+            <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
               <span>View Literature</span>
               <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-blue-600">
             <BookOpen className="w-5 h-5" />
           </div>
         </div>
@@ -159,17 +160,17 @@ export function ResearchOverviewTab({
         {/* Metric 2: Notes */}
         <div
           onClick={() => onNavigateTab("notes")}
-          className="card-scientific card-scientific-hover p-5 cursor-pointer bg-white flex items-center justify-between transition-all"
+          className="card-mice card-mice-hover p-5 cursor-pointer bg-white flex items-center justify-between transition-all group"
         >
           <div className="space-y-1">
             <span className="text-xs font-medium text-slate-500">Research Notes</span>
-            <div className="text-2xl md:text-3xl font-extrabold text-slate-900">{notesCount}</div>
-            <span className="text-[11px] font-semibold text-teal-600 flex items-center gap-1">
+            <div className="font-heading text-2xl md:text-3xl font-bold text-slate-900">{notesCount}</div>
+            <span className="text-[11px] font-semibold text-teal-600 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
               <span>Open Notebook</span>
               <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600">
+          <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200/80 flex items-center justify-center text-teal-600">
             <FileText className="w-5 h-5" />
           </div>
         </div>
@@ -177,16 +178,16 @@ export function ResearchOverviewTab({
         {/* Metric 3: Tasks & Progress */}
         <div
           onClick={() => onNavigateTab("tasks")}
-          className="card-scientific card-scientific-hover p-5 cursor-pointer bg-white flex items-center justify-between transition-all"
+          className="card-mice card-mice-hover p-5 cursor-pointer bg-white flex items-center justify-between transition-all group"
         >
           <div className="space-y-1">
             <span className="text-xs font-medium text-slate-500">Progress</span>
-            <div className="text-2xl md:text-3xl font-extrabold text-purple-700">{progress}%</div>
+            <div className="font-heading text-2xl md:text-3xl font-bold text-purple-700">{progress}%</div>
             <span className="text-[11px] font-semibold text-purple-600">
-              {tasksCount.completed} / {tasksCount.total} Tasks Completed
+              {tasksCount.completed} / {tasksCount.total} Tasks Done
             </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200/80 flex items-center justify-center text-purple-600">
             <CheckSquare className="w-5 h-5" />
           </div>
         </div>
@@ -194,17 +195,17 @@ export function ResearchOverviewTab({
         {/* Metric 4: Key Findings */}
         <div
           onClick={() => onNavigateTab("findings")}
-          className="card-scientific card-scientific-hover p-5 cursor-pointer bg-white flex items-center justify-between transition-all"
+          className="card-mice card-mice-hover p-5 cursor-pointer bg-white flex items-center justify-between transition-all group"
         >
           <div className="space-y-1">
             <span className="text-xs font-medium text-slate-500">Key Findings</span>
-            <div className="text-2xl md:text-3xl font-extrabold text-amber-600">{findingsCount}</div>
-            <span className="text-[11px] font-semibold text-amber-600 flex items-center gap-1">
-              <span>Explore Insights</span>
+            <div className="font-heading text-2xl md:text-3xl font-bold text-amber-600">{findingsCount}</div>
+            <span className="text-[11px] font-semibold text-amber-600 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+              <span>View Insights</span>
               <ArrowRight className="w-3 h-3" />
             </span>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600">
             <Sparkles className="w-5 h-5" />
           </div>
         </div>

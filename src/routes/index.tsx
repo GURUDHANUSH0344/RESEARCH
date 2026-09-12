@@ -36,6 +36,8 @@ function ResearchCompassApp() {
   const [isRunningPipeline, setIsRunningPipeline] = useState(false);
   const [pipelineProgress, setPipelineProgress] = useState<PipelineProgressUpdate | null>(null);
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   // Modals state
   const [isNewResearchOpen, setIsNewResearchOpen] = useState(false);
   const [isCropDemoOpen, setIsCropDemoOpen] = useState(false);
@@ -232,6 +234,7 @@ function ResearchCompassApp() {
         onOpenAuth={() => setIsAuthOpen(true)}
         user={user}
         onLogout={handleLogout}
+        onToggleMobileMenu={() => setMobileMenuOpen((prev) => !prev)}
       />
 
       {/* Main View Container: Left Sidebar + Dynamic Content Canvas */}
@@ -251,6 +254,8 @@ function ResearchCompassApp() {
           tasksCount={tasksCount}
           findingsCount={findingsCount}
           isRunningPipeline={isRunningPipeline}
+          isMobileOpen={mobileMenuOpen}
+          onCloseMobile={() => setMobileMenuOpen(false)}
         />
 
         <div className="flex-1 min-h-0 overflow-hidden relative flex flex-col bg-[#F5F7FB]">

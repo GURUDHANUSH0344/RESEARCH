@@ -49,18 +49,26 @@ export function ResearchLibrary({
   // Deletion Dialog State
   const [projectToDelete, setProjectToDelete] = useState<ResearchProject | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const loadProjects = async () => {
-    const list = await workspaceService.getProjects(user?.id);
-    setProjects(list);
+    setIsLoading(true);
+    try {
+      const list = await workspaceService.getProjects(user?.id);
+      setProjects(list);
 
-    // Fetch notes count for each project
-    const counts: Record<string, number> = {};
-    for (const p of list) {
-      const notes = await workspaceService.getNotes(p.id);
-      counts[p.id] = notes.length;
+      // Fetch notes count for each project
+      const counts: Record<string, number> = {};
+      for (const p of list) {
+        const notes = await workspaceService.getNotes(p.id);
+        counts[p.id] = notes.length;
+      }
+      setNotesCounts(counts);
+    } catch {
+      // Handled
+    } finally {
+      setIsLoading(false);
     }
-    setNotesCounts(counts);
   };
 
   useEffect(() => {
@@ -254,10 +262,37 @@ export function ResearchLibrary({
         </div>
       </div>
 
-      {/* Research Project Cards Grid */}
-      {filteredProjects.length > 0 ? (
+      {/* Research Project Cards Grid / Skeleton Loading */}
+      {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((proj) => {
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="card-mice p-6 rounded-2xl space-y-4 border border-slate-200/80 bg-white"
+            >
+              <div className="flex justify-between items-center">
+                <div className="h-5 w-24 skeleton-shimmer rounded-md" />
+                <div className="h-5 w-16 skeleton-shimmer rounded-full" />
+              </div>
+              <div className="space-y-2 pt-1">
+                <div className="h-6 w-3/4 skeleton-shimmer rounded-md" />
+                <div className="h-4 w-full skeleton-shimmer rounded-md" />
+                <div className="h-4 w-2/3 skeleton-shimmer rounded-md" />
+              </div>
+              <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                <div className="h-3 w-20 skeleton-shimmer rounded" />
+                <div className="h-2 w-full skeleton-shimmer rounded-full" />
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                <div className="h-4 w-28 skeleton-shimmer rounded" />
+                <div className="h-8 w-28 skeleton-shimmer rounded-xl" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredProjects.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((proj, idx) => {
             const paperCount = proj.papers?.length || 0;
             const noteCount = notesCounts[proj.id] || 0;
             const progress = proj.progress || 0;
@@ -266,17 +301,18 @@ export function ResearchLibrary({
               <div
                 key={proj.id}
                 onClick={() => onOpenResearch(proj)}
-                className="card-scientific card-scientific-hover bg-white p-6 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 border border-slate-200/80 hover:border-blue-300 transition-all group"
+                style={{ animationDelay: `${idx * 40}ms` }}
+                className="card-mice card-mice-hover bg-white p-6 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 border border-slate-200/80 hover:border-blue-300 transition-all group animate-fade-slide relative"
               >
                 <div className="space-y-3">
-                  {/* Top Meta: Field & ID */}
+                  {/* Top Meta: Field & Status */}
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
+                    <span className="text-[11px] font-semibold text-slate-600 bg-slate-100/90 px-2.5 py-0.5 rounded-md border border-slate-200">
                       {proj.research_field || "Scientific Inquiry"}
                     </span>
 
                     <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getStatusBadge(
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${getStatusBadge(
                         proj.status
                       )}`}
                     >
@@ -285,17 +321,17 @@ export function ResearchLibrary({
                   </div>
 
                   {/* Research Title */}
-                  <h3 className="text-base font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
+                  <h3 className="font-heading font-bold text-base text-slate-900 leading-snug group-hover:text-blue-600 transition-colors line-clamp-2">
                     {proj.title}
                   </h3>
 
                   {/* Question / Short description */}
-                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-medium">
+                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 font-normal">
                     {proj.research_question}
                   </p>
 
                   {/* Research ID Tag */}
-                  <div className="pt-1">
+                  <div className="pt-0.5">
                     <span className="text-[10px] font-mono text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
                       ID: {proj.id}
                     </span>
@@ -308,9 +344,9 @@ export function ResearchLibrary({
                     <span className="text-slate-500 font-medium">Progress</span>
                     <span className="text-blue-700 font-bold">{progress}%</span>
                   </div>
-                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                     <div
-                      className="bg-blue-600 h-full rounded-full transition-all duration-300"
+                      className="bg-blue-600 h-full rounded-full transition-all duration-400 ease-out"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -347,10 +383,10 @@ export function ResearchLibrary({
                         onOpenResearch(proj);
                       }}
                       size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-8 px-3.5 rounded-xl shadow-2xs flex items-center gap-1"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold h-8 px-3.5 rounded-xl shadow-2xs flex items-center gap-1.5 group/btn cursor-pointer btn-interactive"
                     >
                       <span>Open Research</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />
                     </Button>
 
                     <div className="flex items-center gap-1">
@@ -359,7 +395,7 @@ export function ResearchLibrary({
                         variant="ghost"
                         size="sm"
                         title="Duplicate research project"
-                        className="text-slate-500 hover:text-slate-800 text-xs h-8 px-2 rounded-lg"
+                        className="text-slate-500 hover:text-slate-800 text-xs h-8 px-2 rounded-lg cursor-pointer btn-interactive"
                       >
                         <Copy className="w-3.5 h-3.5 mr-1" />
                         Clone
@@ -373,7 +409,7 @@ export function ResearchLibrary({
                         variant="ghost"
                         size="sm"
                         title="Delete research project"
-                        className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs h-8 w-8 p-0 rounded-lg"
+                        className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs h-8 w-8 p-0 rounded-lg cursor-pointer btn-interactive"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
