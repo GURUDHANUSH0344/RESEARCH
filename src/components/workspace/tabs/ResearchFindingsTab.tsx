@@ -19,12 +19,22 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { StageCompletionButton } from "../StageCompletionButton";
+import { ResearchModuleHeader } from "../ResearchModuleHeader";
+
 interface ResearchFindingsTabProps {
   project: ResearchProject;
   onFindingsChanged?: (count: number) => void;
+  isStageCompleted?: boolean;
+  onToggleStageCompletion?: () => void;
 }
 
-export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFindingsTabProps) {
+export function ResearchFindingsTab({
+  project,
+  onFindingsChanged,
+  isStageCompleted,
+  onToggleStageCompletion,
+}: ResearchFindingsTabProps) {
   const [findings, setFindings] = useState<ResearchFinding[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>("all");
@@ -136,54 +146,62 @@ export function ResearchFindingsTab({ project, onFindingsChanged }: ResearchFind
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto py-2">
-      {/* Header & Controls */}
-      <div className="card-mice p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-bold font-heading text-slate-900 tracking-tight">
-              Key Findings & Discoveries
-            </h2>
-            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs font-semibold px-2.5 py-0.5">
-              {findings.length} Findings
-            </Badge>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Empirical insights, literature gaps, and quantitative trends isolated to Research ID:{" "}
-            <span className="font-mono font-semibold text-slate-700">{project.id}</span>
-          </p>
-        </div>
+    <div className="space-y-6 max-w-[1400px] mx-auto py-2">
+      {/* Back to Research Action Bar */}
+      <div className="flex items-center justify-between pb-1">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+          <Sparkles className="w-4 h-4 text-amber-600" />
+          <span>Key Findings & Discoveries</span>
+        </span>
 
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setIsAddOpen(true)}
-            size="sm"
-            className="btn-interactive bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold h-9 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5"
-          >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>Add Finding</span>
-          </Button>
-        </div>
+        <span className="text-xs text-slate-500 font-medium">
+          Research ID: <strong className="font-mono text-slate-700">{project.id}</strong>
+        </span>
       </div>
 
-      {/* Filter Tabs */}
+      {/* 🧭 Unified Key Findings & Discoveries Header */}
+      <ResearchModuleHeader
+        icon={<Sparkles className="w-6 h-6 text-amber-600" />}
+        iconBgClass="bg-amber-50 text-amber-600 border-amber-200"
+        title="Key Findings & Discoveries"
+        countLabel={findings.length === 1 ? "1 Finding" : `${findings.length} Findings`}
+        countBadgeClass="bg-amber-50 text-amber-800 border-amber-200"
+        description="Empirical insights, literature gaps, and quantitative trends isolated to the current research."
+        researchId={project.id}
+        stageName="Findings"
+        isStageCompleted={isStageCompleted}
+        onToggleStageCompletion={onToggleStageCompletion}
+        secondaryActions={
+          <button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+            className="h-9 px-3.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer shrink-0"
+          >
+            <PlusCircle className="w-3.5 h-3.5 text-slate-500" />
+            <span>Add Finding</span>
+          </button>
+        }
+      />
+
+      {/* Filter Tabs & Search Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-          <Input
+        <div className="relative flex-1 max-w-lg">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-4" />
+          <input
+            type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search findings, gaps, and statistics..."
-            className="pl-10 h-10 bg-white border-slate-200/80 text-xs rounded-xl shadow-2xs focus-visible:ring-slate-400/20"
+            className="w-full h-12 pl-11 pr-4 text-[14px] rounded-xl bg-white border border-slate-200 shadow-2xs placeholder:text-slate-400 focus:outline-none focus:border-[#536DFE] transition-colors"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/50">
           {["all", "finding", "gap", "trend", "statistic", "insight"].map((t) => (
             <button
               key={t}
               onClick={() => setFilterType(t)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all duration-150 ${
+              className={`px-3.5 py-2 text-xs font-semibold rounded-lg capitalize transition-all duration-150 cursor-pointer ${
                 filterType === t
                   ? "bg-white text-slate-900 shadow-2xs font-semibold"
                   : "text-slate-600 hover:text-slate-900"

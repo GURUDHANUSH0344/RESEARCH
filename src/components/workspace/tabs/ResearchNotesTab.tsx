@@ -15,15 +15,25 @@ import {
   Clock,
   Check,
   Filter,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { StageCompletionButton } from "../StageCompletionButton";
 
 interface ResearchNotesTabProps {
   project: ResearchProject;
   onNotesChanged?: (count: number) => void;
+  isStageCompleted?: boolean;
+  onToggleStageCompletion?: () => void;
 }
 
-export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabProps) {
+export function ResearchNotesTab({
+  project,
+  onNotesChanged,
+  isStageCompleted,
+  onToggleStageCompletion,
+}: ResearchNotesTabProps) {
   const [notes, setNotes] = useState<ResearchNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -173,7 +183,14 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {onToggleStageCompletion && (
+            <StageCompletionButton
+              stageName="Methodology"
+              isCompleted={isStageCompleted}
+              onToggle={onToggleStageCompletion}
+            />
+          )}
           <Button
             onClick={handleOpenNewNote}
             size="sm"
@@ -197,12 +214,12 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50">
+        <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50 overflow-x-auto no-scrollbar scroll-snap-x">
           {["all", "methodology", "literature", "observation", "idea", "general"].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-all duration-150 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize shrink-0 scroll-snap-align-start transition-all duration-150 touch-target-44 flex items-center ${
                 selectedCategory === cat
                   ? "bg-white text-slate-900 shadow-2xs font-semibold"
                   : "text-slate-600 hover:text-slate-900"
@@ -241,7 +258,8 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
           {filteredNotes.map((note) => (
             <div
               key={note.id}
-              className={`card-mice card-mice-hover p-6 transition-all duration-200 space-y-3.5 flex flex-col justify-between ${
+              onClick={() => handleOpenEditNote(note)}
+              className={`card-mice card-mice-hover p-5 sm:p-6 transition-all duration-200 space-y-3.5 flex flex-col justify-between cursor-pointer ${
                 note.pinned
                   ? "border-teal-300 ring-1 ring-teal-200/40 bg-teal-50/15"
                   : ""
@@ -265,10 +283,13 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <button
-                      onClick={() => togglePin(note)}
-                      className={`p-1.5 rounded-lg transition-colors ${
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePin(note);
+                      }}
+                      className={`p-2 rounded-lg transition-colors touch-target-44 flex items-center justify-center ${
                         note.pinned
                           ? "text-teal-700 bg-teal-50"
                           : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
@@ -278,15 +299,21 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
                       <Pin className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleOpenEditNote(note)}
-                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEditNote(note);
+                      }}
+                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors touch-target-44 flex items-center justify-center"
                       title="Edit note"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDeleteNote(note.id, note.title)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteNote(note.id, note.title);
+                      }}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors touch-target-44 flex items-center justify-center"
                       title="Delete note"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -344,97 +371,132 @@ export function ResearchNotesTab({ project, onNotesChanged }: ResearchNotesTabPr
         </div>
       )}
 
-      {/* Editor Modal */}
+      {/* Editor Modal: Full-screen on mobile, centered on desktop */}
       {isEditorOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 border border-slate-200/80 animate-fade-slide">
-            <h3 className="text-base font-bold font-heading text-slate-900">
-              {editingNoteId ? "Edit Research Note" : "New Research Note"}
-            </h3>
+        <div className="fixed inset-0 z-50 bg-white md:bg-slate-900/40 md:backdrop-blur-xs flex md:items-center md:justify-center p-0 md:p-4 overflow-y-auto">
+          <div className="bg-white md:rounded-2xl max-w-xl w-full h-full md:h-auto min-h-full md:min-h-0 p-4 sm:p-6 shadow-2xl flex flex-col justify-between border-0 md:border border-slate-200/80 animate-fade-slide overflow-y-auto">
+            <form onSubmit={handleSaveNote} className="flex flex-col h-full space-y-4">
+              {/* Sticky Header with Back / Cancel and Save */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 shrink-0 sticky top-0 bg-white z-10">
+                <button
+                  type="button"
+                  onClick={() => setIsEditorOpen(false)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#536DFE] hover:text-[#243B64] transition-colors p-1.5 -ml-1 rounded-lg hover:bg-slate-100 touch-target-44 cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Cancel</span>
+                </button>
 
-            <form onSubmit={handleSaveNote} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-slate-700">Note Title *</label>
-                <Input
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Swin Transformer Feature Map Analysis"
-                  className="text-xs mt-1 rounded-xl"
-                />
+                <h3 className="text-sm sm:text-base font-bold font-heading text-slate-900 truncate max-w-[180px]">
+                  {editingNoteId ? "Edit Note" : "New Note"}
+                </h3>
+
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="bg-[#243B64] hover:bg-[#1D3154] text-white text-xs font-semibold rounded-lg h-8 px-3.5 shadow-2xs touch-target-44 cursor-pointer"
+                >
+                  Save Note
+                </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-4 flex-1">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700">Category</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value as ResearchNote["category"])}
-                    className="w-full text-xs p-2 border border-slate-200 rounded-xl bg-white mt-1"
-                  >
-                    <option value="methodology">Methodology</option>
-                    <option value="literature">Literature Review</option>
-                    <option value="observation">Observation</option>
-                    <option value="idea">Hypothesis / Idea</option>
-                    <option value="general">General Note</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-slate-700">Tags (comma-separated)</label>
+                  <label className="text-xs font-semibold text-slate-700">Note Title *</label>
                   <Input
-                    value={tagsInput}
-                    onChange={(e) => setTagsInput(e.target.value)}
-                    placeholder="e.g. Attention, Benchmark, Edge"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Swin Transformer Feature Map Analysis"
                     className="text-xs mt-1 rounded-xl"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-700">Note Content *</label>
-                <textarea
-                  rows={6}
-                  required
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Write detailed notes, observations, mathematical proofs, or paper takeaways..."
-                  className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:outline-none mt-1"
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Category</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as ResearchNote["category"])}
+                      className="w-full text-xs p-2 border border-slate-200 rounded-xl bg-white mt-1"
+                    >
+                      <option value="methodology">Methodology</option>
+                      <option value="literature">Literature Review</option>
+                      <option value="observation">Observation</option>
+                      <option value="idea">Hypothesis / Idea</option>
+                      <option value="general">General Note</option>
+                    </select>
+                  </div>
 
-              <div className="flex items-center justify-between pt-2">
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isPinned}
-                    onChange={(e) => setIsPinned(e.target.checked)}
-                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-                  />
-                  <span>Pin to top of research workspace</span>
-                </label>
-
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsEditorOpen(false)}
-                    className="btn-interactive text-xs rounded-xl border-slate-200"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="btn-interactive bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold rounded-xl"
-                  >
-                    Save Note
-                  </Button>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700">Tags (comma-separated)</label>
+                    <Input
+                      value={tagsInput}
+                      onChange={(e) => setTagsInput(e.target.value)}
+                      placeholder="e.g. Attention, Benchmark, Edge"
+                      className="text-xs mt-1 rounded-xl"
+                    />
+                  </div>
                 </div>
+
+                <div className="flex-1 flex flex-col min-h-[180px] sm:min-h-[220px]">
+                  <label className="text-xs font-semibold text-slate-700">Note Content *</label>
+                  <textarea
+                    rows={8}
+                    required
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Write detailed notes, observations, mathematical proofs, or paper takeaways..."
+                    className="w-full flex-1 text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:outline-none leading-relaxed mt-1 resize-y"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isPinned}
+                      onChange={(e) => setIsPinned(e.target.checked)}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>Pin to top of research workspace</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Bottom Sticky Action Bar for Mobile & Desktop */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 shrink-0 sticky bottom-0 bg-white z-10 pb-safe">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditorOpen(false)}
+                  className="text-xs rounded-xl border-slate-200 touch-target-44"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-[#243B64] hover:bg-[#1D3154] text-white text-xs font-semibold rounded-xl h-10 px-5 shadow-2xs touch-target-44"
+                >
+                  Save Note
+                </Button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Mobile Floating Action Button (FAB): + Add Note */}
+      <div className="fixed bottom-20 right-4 z-40 md:hidden">
+        <Button
+          onClick={handleOpenNewNote}
+          className="h-14 px-5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-heading font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 border border-blue-500/20 active:scale-95 touch-target-44"
+          aria-label="Add Note"
+        >
+          <PlusCircle className="w-5 h-5" />
+          <span className="text-sm">Add Note</span>
+        </Button>
+      </div>
     </div>
   );
 }

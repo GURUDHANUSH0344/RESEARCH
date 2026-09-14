@@ -19,19 +19,33 @@ import {
   Layers,
   FileText,
   Clock,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { generateCitations } from "@/lib/services/citation-formatter";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { StageCompletionButton } from "../StageCompletionButton";
 
 interface ResearchPapersTabProps {
   project: ResearchProject;
   onUpdateProject: (updated: ResearchProject) => void;
+  isStageCompleted?: boolean;
+  onToggleStageCompletion?: () => void;
 }
 
-export function ResearchPapersTab({ project, onUpdateProject }: ResearchPapersTabProps) {
+export function ResearchPapersTab({
+  project,
+  onUpdateProject,
+  isStageCompleted,
+  onToggleStageCompletion,
+}: ResearchPapersTabProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [addMode, setAddMode] = useState<"search" | "manual">("search");
+
+  // Mobile Paper Details BottomSheet
+  const [selectedPaper, setSelectedPaper] = useState<NormalizedPaper | null>(null);
+  const [isDetailsSheetOpen, setIsDetailsSheetOpen] = useState(false);
 
   // Academic Search Modal State
   const [academicQuery, setAcademicQuery] = useState(project.research_question);
@@ -163,6 +177,11 @@ export function ResearchPapersTab({ project, onUpdateProject }: ResearchPapersTa
         </div>
 
         <div className="flex items-center gap-2.5">
+          <StageCompletionButton
+            stageName="Papers"
+            isCompleted={isStageCompleted}
+            onToggle={onToggleStageCompletion}
+          />
           <Button
             onClick={() => setIsAddOpen(true)}
             size="sm"
@@ -195,48 +214,52 @@ export function ResearchPapersTab({ project, onUpdateProject }: ResearchPapersTa
             return (
               <div
                 key={paper.id || idx}
+                onClick={() => {
+                  setSelectedPaper(paper);
+                  setIsDetailsSheetOpen(true);
+                }}
                 style={{ animationDelay: `${idx * 30}ms` }}
-                className="card-mice card-mice-hover bg-white p-6 rounded-2xl border border-slate-200/80 hover:border-blue-300 transition-all space-y-3 animate-fade-slide"
+                className="card-mice card-mice-hover bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 hover:border-blue-300 transition-all space-y-2.5 sm:space-y-3 animate-fade-slide cursor-pointer"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                   <div className="space-y-1 max-w-4xl">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                      <span className="text-[10px] sm:text-[11px] font-heading font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                         {paper.year || 2024}
                       </span>
-                      <span className="text-xs font-semibold text-slate-600">
+                      <span className="text-[11px] sm:text-xs font-heading font-semibold text-slate-600 truncate max-w-[180px] sm:max-w-none">
                         {paper.venue || "Academic Publication"}
                       </span>
                       {paper.open_access && (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 uppercase">
+                        <span className="text-[9px] sm:text-[10px] font-heading font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 uppercase">
                           Open Access
                         </span>
                       )}
-                      <span className="text-slate-300">&bull;</span>
-                      <span className="text-xs text-slate-500 font-medium">
+                      <span className="text-slate-300 hidden sm:inline">&bull;</span>
+                      <span className="text-[11px] sm:text-xs text-slate-500 font-medium">
                         Relevance: <strong className="text-blue-600">{relevance}%</strong>
                       </span>
                     </div>
 
-                    <h3 className="text-base font-bold text-slate-900 leading-snug hover:text-blue-600 transition-colors">
+                    <h3 className="font-heading text-sm sm:text-base font-bold text-slate-900 leading-snug hover:text-blue-600 transition-colors line-clamp-2 sm:line-clamp-none">
                       {paper.title}
                     </h3>
 
-                    <p className="text-xs text-slate-500 font-medium">
+                    <p className="text-xs text-slate-500 font-medium line-clamp-1">
                       By: {paper.authors?.join(", ") || "Unknown Authors"}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-start">
+                  <div className="flex items-center gap-1 shrink-0 self-end sm:self-start pt-1 sm:pt-0" onClick={(e) => e.stopPropagation()}>
                     <Button
                       onClick={() => copyCitation(paper)}
                       variant="ghost"
                       size="sm"
                       title="Copy APA citation"
-                      className="text-slate-600 hover:text-blue-600 text-xs h-8 px-2.5 rounded-lg"
+                      className="text-slate-600 hover:text-blue-600 text-xs h-8 px-2 rounded-lg touch-target-44"
                     >
                       <Copy className="w-3.5 h-3.5 mr-1" />
-                      Cite
+                      <span>Cite</span>
                     </Button>
 
                     {paper.url && (
@@ -244,10 +267,10 @@ export function ResearchPapersTab({ project, onUpdateProject }: ResearchPapersTa
                         href={paper.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-heading font-semibold text-blue-600 hover:bg-blue-50 transition-colors touch-target-44"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Source</span>
+                        <span className="hidden sm:inline">Source</span>
                       </a>
                     )}
 
@@ -255,7 +278,7 @@ export function ResearchPapersTab({ project, onUpdateProject }: ResearchPapersTa
                       onClick={() => handleRemovePaper(paper.id, paper.title)}
                       variant="ghost"
                       size="sm"
-                      className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 h-8 w-8 p-0 rounded-lg"
+                      className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 h-8 w-8 p-0 rounded-lg touch-target-44"
                       title="Remove paper from research"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -264,17 +287,17 @@ export function ResearchPapersTab({ project, onUpdateProject }: ResearchPapersTa
                 </div>
 
                 {paper.abstract && (
-                  <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                  <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 sm:p-3.5 rounded-xl border border-slate-100 font-sans line-clamp-2 sm:line-clamp-none">
                     {paper.abstract}
                   </p>
                 )}
 
                 {paper.concepts && paper.concepts.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
                     {paper.concepts.slice(0, 4).map((c, cIdx) => (
                       <span
                         key={cIdx}
-                        className="text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
+                        className="text-[10px] sm:text-[11px] font-sans font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
                       >
                         {c}
                       </span>
@@ -490,6 +513,135 @@ export function ResearchPapersTab({ project, onUpdateProject }: ResearchPapersTa
           </div>
         </div>
       )}
+
+      {/* Mobile Paper Details & Citations BottomSheet */}
+      <BottomSheet
+        isOpen={isDetailsSheetOpen}
+        onClose={() => {
+          setIsDetailsSheetOpen(false);
+          setSelectedPaper(null);
+        }}
+        title={
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDetailsSheetOpen(false);
+                setSelectedPaper(null);
+              }}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#536DFE] hover:text-[#243B64] mr-1 p-1 -ml-1 rounded transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Papers</span>
+            </button>
+            <span className="text-slate-300">|</span>
+            <span>Paper Details</span>
+          </div>
+        }
+      >
+        {selectedPaper && (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-heading font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                  {selectedPaper.year || 2024}
+                </span>
+                <span className="text-xs font-heading font-semibold text-slate-700">
+                  {selectedPaper.venue || "Academic Publication"}
+                </span>
+                {selectedPaper.open_access && (
+                  <span className="text-[10px] font-heading font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 uppercase">
+                    Open Access
+                  </span>
+                )}
+                <span className="text-xs text-slate-500 font-medium">
+                  • Relevance: <strong className="text-blue-600">{selectedPaper.relevance_score || 92}%</strong>
+                </span>
+              </div>
+
+              <h3 className="font-heading text-base font-bold text-slate-900 leading-snug">
+                {selectedPaper.title}
+              </h3>
+
+              <p className="text-xs text-slate-500 font-medium">
+                Authors: {selectedPaper.authors?.join(", ") || "Unknown Authors"}
+              </p>
+            </div>
+
+            {selectedPaper.abstract && (
+              <div className="space-y-1">
+                <div className="text-xs font-heading font-semibold text-slate-700">Abstract</div>
+                <div className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-200/80 max-h-48 overflow-y-auto">
+                  {selectedPaper.abstract}
+                </div>
+              </div>
+            )}
+
+            {/* Citations block */}
+            <div className="space-y-2 pt-1 border-t border-slate-100">
+              <div className="text-xs font-heading font-semibold text-slate-800">Copy Citation</div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const c = generateCitations(selectedPaper);
+                    navigator.clipboard.writeText(c.apa);
+                    toast.success("APA citation copied!");
+                  }}
+                  className="h-10 text-xs font-medium rounded-xl touch-target-44 justify-center"
+                >
+                  <Copy className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                  Copy APA
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const c = generateCitations(selectedPaper);
+                    navigator.clipboard.writeText(c.bibtex);
+                    toast.success("BibTeX citation copied!");
+                  }}
+                  className="h-10 text-xs font-medium rounded-xl touch-target-44 justify-center"
+                >
+                  <Copy className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+                  Copy BibTeX
+                </Button>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="pt-2 flex flex-col gap-2">
+              {selectedPaper.url && (
+                <a
+                  href={selectedPaper.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full flex items-center justify-center gap-2 h-11 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-2xs touch-target-44"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open Original Publication / DOI
+                </a>
+              )}
+
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  handleRemovePaper(selectedPaper.id, selectedPaper.title);
+                  setIsDetailsSheetOpen(false);
+                  setSelectedPaper(null);
+                }}
+                className="w-full text-rose-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-medium h-10 rounded-xl touch-target-44"
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                Remove Paper from Collection
+              </Button>
+            </div>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   );
 }

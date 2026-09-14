@@ -25,6 +25,9 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Temporary scratch
+scratch/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

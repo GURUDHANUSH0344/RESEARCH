@@ -478,6 +478,214 @@ export type Database = {
         }
         Relationships: []
       }
+      research_notes: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          pinned: boolean
+          project_id: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          project_id: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          project_id?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          project_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          project_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          project_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_findings: {
+        Row: {
+          confidence: string | null
+          created_at: string
+          description: string
+          evidence: string | null
+          feasibility: number | null
+          id: string
+          metrics: Json | null
+          novelty: number | null
+          project_id: string
+          supporting_papers: string[]
+          title: string
+          type: string
+        }
+        Insert: {
+          confidence?: string | null
+          created_at?: string
+          description: string
+          evidence?: string | null
+          feasibility?: number | null
+          id?: string
+          metrics?: Json | null
+          novelty?: number | null
+          project_id: string
+          supporting_papers?: string[]
+          title: string
+          type?: string
+        }
+        Update: {
+          confidence?: string | null
+          created_at?: string
+          description?: string
+          evidence?: string | null
+          feasibility?: number | null
+          id?: string
+          metrics?: Json | null
+          novelty?: number | null
+          project_id?: string
+          supporting_papers?: string[]
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_findings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_timeline: {
+        Row: {
+          created_at: string
+          description: string
+          event_type: string
+          id: string
+          project_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          event_type: string
+          id?: string
+          project_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          event_type?: string
+          id?: string
+          project_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_timeline_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      research_chats: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          project_id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          project_id: string
+          role: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_chats_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "research_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

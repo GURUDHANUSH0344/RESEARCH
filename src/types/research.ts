@@ -30,11 +30,105 @@ export interface ResearchProject {
   papers: (NormalizedPaper & { analysis?: PaperAnalysisResult | null; relevance_score?: number })[];
   comparison?: MultiPaperComparisonResult | null;
   gaps?: ResearchGapItem[];
+  research_gaps?: ResearchGapEntry[];
+  evidence?: ResearchEvidenceItem[];
+  gap_report?: ResearchGapAnalysisReport | null;
   contradictions?: ContradictionItem[];
   hypotheses?: HypothesisItem[];
   selected_hypothesis?: HypothesisItem | null;
   experiment?: ExperimentPlanResult | null;
+  experiment_plan?: ExperimentPlanResult | null;
   report?: string | null;
+  final_report?: string | null;
+  stage_completions?: Record<string, boolean>;
+}
+
+export type WorkflowStageId =
+  | "overview"       // Stage 1: Idea
+  | "papers"         // Stage 2: Papers
+  | "comparison"     // Stage 3: Evidence Matrix
+  | "hypotheses"     // Stage 4: Research Gap
+  | "notes"          // Stage 5: Methodology
+  | "findings"       // Stage 6: Findings
+  | "final_output";  // Stage 7: Final Paper
+
+// ------------------------------------------------------------------
+// EVIDENCE MATRIX DATA MODEL
+// ------------------------------------------------------------------
+
+export type EvidenceStrength = "Strong" | "Moderate" | "Weak" | "Insufficient";
+
+export interface ResearchEvidenceItem {
+  id: string; // "ev_[paper_id]"
+  research_id: string;
+  paper_id: string;
+  paper_title: string;
+  authors: string[];
+  year: number;
+  venue?: string;
+  doi?: string;
+  url?: string;
+  research_problem: string;
+  methodology: string;
+  dataset: string;
+  key_finding: string;
+  limitations: string;
+  research_contribution?: string;
+  evidence_strength: EvidenceStrength;
+  extracted_by_ai?: boolean;
+  updated_at: string;
+}
+
+export interface EvidenceComparisonSynthesis {
+  selected_paper_ids: string[];
+  common_findings: string[];
+  conflicting_findings: string[];
+  different_methodologies: string[];
+  different_datasets: string[];
+  research_limitations: string[];
+  insufficient_evidence_areas: string[];
+  synthesized_at: string;
+}
+
+// ------------------------------------------------------------------
+// RESEARCH GAP DATA MODEL
+// ------------------------------------------------------------------
+
+export type GapConfidence = "High" | "Medium" | "Low";
+
+export interface ResearchGapEntry {
+  gap_id: string;
+  research_id: string;
+  title: string;
+  description: string;
+  supporting_papers: string[]; // Paper titles or IDs
+  confidence: GapConfidence;
+  verified: boolean;
+  category?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ResearchGapAnalysisReport {
+  research_id: string;
+  research_title?: string;
+  existing_research: string;
+  common_approaches: {
+    methods: string[];
+    algorithms: string[];
+    datasets: string[];
+    technologies: string[];
+    research_approaches: string[];
+  };
+  limitations_in_existing_research: string[];
+  missing_areas: string[];
+  contradictions: {
+    topic: string;
+    description: string;
+    conflicting_sources: string[];
+  }[];
+  gaps: ResearchGapEntry[];
+  analyzed_at: string;
 }
 
 export interface ResearchNote {

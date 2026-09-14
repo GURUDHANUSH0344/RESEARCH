@@ -53,8 +53,10 @@ import {
   HelpCircle,
   BarChart3,
   FileSpreadsheet,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { StageCompletionButton } from "../StageCompletionButton";
 
 export interface AcademicSectionDef {
   key: string;
@@ -190,11 +192,17 @@ export const ACADEMIC_PAPER_SECTIONS: AcademicSectionDef[] = [
 interface ResearchFinalOutputTabProps {
   project: ResearchProject;
   initialMode?: FinalOutputType;
+  onNavigateTab?: (tab: string) => void;
+  isStageCompleted?: boolean;
+  onToggleStageCompletion?: () => void;
 }
 
 export function ResearchFinalOutputTab({
   project,
   initialMode = "paper",
+  onNavigateTab,
+  isStageCompleted,
+  onToggleStageCompletion,
 }: ResearchFinalOutputTabProps) {
   const [mode, setMode] = useState<FinalOutputType>(initialMode);
   const [docType, setDocType] = useState<PaperDocumentType>("research_paper");
@@ -618,8 +626,98 @@ export function ResearchFinalOutputTab({
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto py-2">
-      {/* 🧭 Top Stage Card: Final Research Paper Header & Controls */}
-      <div className="card-mice p-6 space-y-4">
+      {/* Back to Research Action Bar */}
+      {onNavigateTab && (
+        <div className="flex items-center justify-between pb-1">
+          <button
+            type="button"
+            onClick={() => onNavigateTab("overview")}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#536DFE] hover:text-[#243B64] transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-100 touch-target-44"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Research</span>
+          </button>
+
+          <span className="text-xs text-slate-500 font-medium">
+            Research ID: <strong className="font-mono text-slate-700">{project.id}</strong>
+          </span>
+        </div>
+      )}
+
+      {/* 📱 Mobile Header: Document-focused interface */}
+      <div className="md:hidden bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-blue-700">
+              {mode === "paper" ? "Academic Paper" : "Patent Draft"}
+            </div>
+            <h2 className="text-xl font-bold font-heading text-slate-900 leading-tight">
+              Final Paper
+            </h2>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] font-semibold text-slate-500 uppercase block">Research Readiness</span>
+            <span className="text-base font-bold font-heading text-emerald-600">
+              {readiness}%
+            </span>
+          </div>
+        </div>
+
+        {/* Quick Actions (Edit, Review, Generate) */}
+        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+          <Button
+            onClick={() => handleEditBeforeDownload(activeSectionKey)}
+            variant="outline"
+            size="sm"
+            className="h-10 text-xs font-semibold rounded-xl border-slate-200 touch-target-44"
+          >
+            <Edit3 className="w-3.5 h-3.5 mr-1 text-slate-600" />
+            Edit Section
+          </Button>
+
+          <Button
+            onClick={() => setIsPreviewOpen(true)}
+            variant="outline"
+            size="sm"
+            className="h-10 text-xs font-semibold rounded-xl border-slate-200 touch-target-44"
+          >
+            <Eye className="w-3.5 h-3.5 mr-1 text-teal-600" />
+            Review Paper
+          </Button>
+
+          <Button
+            onClick={handleGenerateResearchPaper}
+            disabled={isGeneratingPaper || loading}
+            size="sm"
+            className="h-10 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white touch-target-44 col-span-2 flex items-center justify-center"
+          >
+            {isGeneratingPaper ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Generate Manuscript
+              </>
+            )}
+          </Button>
+        </div>
+
+        {onToggleStageCompletion && (
+          <div className="pt-2 border-t border-slate-100 flex justify-end">
+            <StageCompletionButton
+              stageName="Final Paper"
+              isCompleted={isStageCompleted}
+              onToggle={onToggleStageCompletion}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 🧭 Top Stage Card: Final Research Paper Header & Controls (Desktop) */}
+      <div className="hidden md:block card-mice p-6 space-y-4">
         {/* Top Badges & Meta Row */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div className="flex flex-wrap items-center gap-2">
@@ -684,12 +782,20 @@ export function ResearchFinalOutputTab({
 
         {/* Primary Actions Bar */}
         <div className="pt-2 flex flex-wrap items-center gap-2.5">
+          {onToggleStageCompletion && (
+            <StageCompletionButton
+              stageName="Final Paper"
+              isCompleted={isStageCompleted}
+              onToggle={onToggleStageCompletion}
+            />
+          )}
+
           {/* 🌟 PROMINENT BUTTON: Generate Research Paper */}
           <Button
             onClick={handleGenerateResearchPaper}
             disabled={isGeneratingPaper || loading}
             size="sm"
-            className="btn-interactive text-xs font-bold h-9 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xs px-4 cursor-pointer"
+            className="text-xs font-semibold h-9 rounded-xl bg-[#243B64] hover:bg-[#1D3154] text-white shadow-2xs px-3.5 cursor-pointer"
           >
             {isGeneratingPaper ? (
               <>
@@ -709,7 +815,7 @@ export function ResearchFinalOutputTab({
             onClick={handleDownloadWordDocx}
             disabled={isExportingDocx || !document}
             size="sm"
-            className="btn-interactive text-xs font-bold h-9 rounded-xl bg-slate-900 hover:bg-slate-800 text-white shadow-xs px-3.5 cursor-pointer"
+            className="text-xs font-semibold h-8.5 rounded-lg bg-[#536DFE] hover:bg-[#4355D6] text-white shadow-2xs px-3.5 cursor-pointer"
           >
             {isExportingDocx ? (
               <>
@@ -719,7 +825,7 @@ export function ResearchFinalOutputTab({
             ) : (
               <>
                 <Download className="w-3.5 h-3.5 mr-1.5" />
-                Download Final Research Paper (.docx)
+                Download Word (.DOCX)
               </>
             )}
           </Button>
@@ -758,11 +864,11 @@ export function ResearchFinalOutputTab({
           </Button>
         </div>
 
-        {/* Mode Selector & Subtype Selector */}
-        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Mode Switcher: Academic Paper vs Patent Draft */}
+        <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 mr-1">Output Mode:</span>
-            <div className="inline-flex p-1 bg-slate-100/90 rounded-xl border border-slate-200/60">
+            <span className="text-xs font-medium text-slate-500">Output Format:</span>
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl">
               <button
                 onClick={() => handleSwitchMode("paper")}
                 className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-150 flex items-center gap-1.5 ${
@@ -805,16 +911,16 @@ export function ResearchFinalOutputTab({
           )}
         </div>
 
-        {/* ⚠️ Patent Legal Disclaimer (Mandatory) */}
+        {/* ⚠️ Patent Legal Disclaimer (Mandatory - Section 18) */}
         {mode === "patent" && (
           <div className="bg-amber-50/90 border border-amber-200/80 rounded-xl p-3.5 flex items-start gap-3">
             <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
             <div className="space-y-0.5 text-xs">
               <p className="font-bold text-amber-900">
-                AI-Generated Patent-Oriented Draft Notice
+                AI-generated patent-oriented draft. Professional review required before filing.
               </p>
               <p className="text-amber-700 font-normal leading-relaxed">
-                This document is an AI-structured preliminary draft to assist researchers in technical disclosure and claim formulation. It does not constitute a legally validated patent application or legal advice. <strong>AI-generated content should be reviewed by a qualified patent attorney or professional before filing.</strong>
+                This document is an AI-structured preliminary technical disclosure to assist research inventors in structuring claims and architectural descriptions. It does not constitute a formal legal patent filing. Professional review required before filing.
               </p>
             </div>
           </div>
@@ -1070,32 +1176,37 @@ export function ResearchFinalOutputTab({
           </div>
 
           {/* 📥 Export & Distribution Controls Bar */}
-          <div className="card-mice p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h4 className="text-xs font-bold font-heading text-slate-900">
-                Export & Distribution Controls
-              </h4>
-              <p className="text-[11px] text-slate-500 font-normal">
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-[#536DFE]">
+                  <Download className="w-3.5 h-3.5" />
+                </div>
+                <h4 className="text-sm font-bold font-heading text-slate-900">
+                  Export & Distribution Controls
+                </h4>
+              </div>
+              <p className="text-xs text-slate-500 font-normal leading-relaxed max-w-3xl pl-9">
                 Export your finalized academic paper as a formatted Microsoft Word (.docx) document with title page, numbered headings, architecture diagrams, benchmark tables, and verified references.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
               <Button
                 onClick={handleDownloadWordDocx}
                 disabled={isExportingDocx || !document}
                 size="sm"
-                className="btn-interactive text-xs font-bold h-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                className="btn-interactive text-xs font-bold h-9 px-4 rounded-xl bg-[#536DFE] hover:bg-[#4355D6] text-white shadow-2xs cursor-pointer flex items-center gap-1.5"
               >
                 {isExportingDocx ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 mr-1 animate-spin" />
-                    Generating DOCX...
+                    <span>Generating DOCX...</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-3.5 h-3.5 mr-1" />
-                    Download Word (.docx)
+                    <span>Download Word (.docx)</span>
                   </>
                 )}
               </Button>
@@ -1104,30 +1215,30 @@ export function ResearchFinalOutputTab({
                 onClick={() => setIsPreviewOpen(true)}
                 size="sm"
                 variant="outline"
-                className="btn-interactive text-xs font-semibold h-8 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+                className="btn-interactive text-xs font-semibold h-9 px-3.5 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5"
               >
-                <Eye className="w-3.5 h-3.5 mr-1 text-teal-600" />
-                Preview Paper
+                <Eye className="w-3.5 h-3.5 text-teal-600" />
+                <span>Preview Paper</span>
               </Button>
 
               <Button
                 onClick={handleExportMarkdown}
                 size="sm"
                 variant="outline"
-                className="btn-interactive text-xs font-semibold h-8 rounded-xl border-slate-200 text-slate-700"
+                className="btn-interactive text-xs font-semibold h-9 px-3.5 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5"
               >
-                <FileCode className="w-3.5 h-3.5 mr-1 text-slate-500" />
-                Markdown (.md)
+                <FileCode className="w-3.5 h-3.5 text-slate-500" />
+                <span>Markdown (.md)</span>
               </Button>
 
               <Button
                 onClick={handleExportPlainText}
                 size="sm"
                 variant="outline"
-                className="btn-interactive text-xs font-semibold h-8 rounded-xl border-slate-200 text-slate-700"
+                className="btn-interactive text-xs font-semibold h-9 px-3.5 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center gap-1.5"
               >
-                <FileText className="w-3.5 h-3.5 mr-1 text-slate-500" />
-                Plain Text (.txt)
+                <FileText className="w-3.5 h-3.5 text-slate-500" />
+                <span>Plain Text (.txt)</span>
               </Button>
             </div>
           </div>
@@ -1885,6 +1996,44 @@ export function ResearchFinalOutputTab({
           </div>
         </div>
       )}
+
+      {/* Mobile Sticky Action Area: Download Word (.docx) */}
+      <div className="fixed bottom-16 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5 md:hidden flex items-center justify-between gap-2 shadow-lg">
+        <div className="flex items-center gap-2 min-w-0">
+          <Badge variant="outline" className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border-emerald-300 shrink-0">
+            {readiness}% Ready
+          </Badge>
+          <span className="text-xs font-semibold text-slate-800 truncate">
+            {mode === "paper" ? "Academic Paper" : "Patent Draft"}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            onClick={() => setIsPreviewOpen(true)}
+            size="sm"
+            variant="outline"
+            className="h-10 px-3 text-xs font-semibold rounded-xl border-slate-300 text-slate-700 touch-target-44"
+          >
+            <Eye className="w-3.5 h-3.5 mr-1 text-teal-600" />
+            Review
+          </Button>
+
+          <Button
+            onClick={handleDownloadWordDocx}
+            disabled={isExportingDocx || !document}
+            size="sm"
+            className="h-10 px-3.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex items-center gap-1.5 touch-target-44"
+          >
+            {isExportingDocx ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span>Word (.docx)</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -33,6 +33,7 @@ import {
   type ExperimentPlanResult,
 } from "./llm";
 import { supabase } from "@/integrations/supabase/client";
+import { isUUID, generateUUID } from "./workspace-service";
 
 export interface PipelineProgressUpdate {
   step: number;
@@ -386,7 +387,7 @@ export async function runAutonomousResearch(
     });
 
     // Assemble unified project object
-    const finalProjectId = projectId || `proj_${Date.now()}`;
+    const finalProjectId = projectId && isUUID(projectId) ? projectId : generateUUID();
     const projectData: ResearchProjectData = {
       id: finalProjectId,
       title: projectTitle,
@@ -436,7 +437,7 @@ export async function persistProjectToSupabase(project: ResearchProjectData, use
     const { data: projData, error: projErr } = await supabase
       .from("research_projects")
       .upsert({
-        id: project.id.startsWith("proj_") ? undefined : project.id,
+        id: isUUID(project.id) ? project.id : generateUUID(),
         user_id: userId,
         title: project.title,
         research_question: project.research_question,
