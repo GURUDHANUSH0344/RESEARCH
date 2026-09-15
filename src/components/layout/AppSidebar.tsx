@@ -197,14 +197,9 @@ export function AppSidebar({
               <Compass className="w-4 h-4" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-heading font-bold text-xs text-[#172033] tracking-tight leading-tight">
-                  Research Compass
-                </span>
-                <span className="px-1 py-0.2 rounded bg-indigo-50 text-[#536DFE] text-[8px] font-bold border border-indigo-200">
-                  PRO
-                </span>
-              </div>
+              <span className="font-heading font-bold text-xs text-[#172033] tracking-tight leading-tight block">
+                Research Compass
+              </span>
               <p className="text-[9px] tracking-wider text-[#64748B] font-medium">
                 {view === "workspace" && activeProject ? "Research Workspace" : "Academic Workspace"}
               </p>
